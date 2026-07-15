@@ -20,7 +20,7 @@
     .selection-item.selected { border-color: #f0e6d2; background: rgba(200, 170, 110, 0.25); }
     .selection-item img { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; }
 
-    /* Tooltip styling */
+    /* Tooltip base */
     .tooltip {
       display: none;
       position: absolute;
@@ -42,7 +42,46 @@
     }
     .selection-item:hover .tooltip { display: block; }
 
+    /* Tooltip content – mimic in-game styling */
     .tooltip strong {
+      display: block;
+      font-size: 0.85rem;
+      margin-bottom: 3px;
+      color: #f0e6d2;
+      font-weight: 700;
+    }
+
+    /* In-game item tooltip elements */
+    .tooltip stats,
+    .tooltip attention {
+      color: #c8aa6e;
+      font-weight: normal;
+    }
+
+    .tooltip passive,
+    .tooltip active {
+      color: #ffffff;
+      display: block;
+      margin-top: 2px;
+    }
+
+    .tooltip passiveName,
+    .tooltip activeName {
+      color: #ffffff;
+      font-weight: bold;
+    }
+
+    .tooltip rarity {
+      color: #9370db;
+    }
+
+    .tooltip br {
+      display: block;
+      margin: 2px 0;
+    }
+
+    /* Override for augment tooltips (keep name bold at top) */
+    .augment-tooltip strong {
       display: block;
       font-size: 0.85rem;
       margin-bottom: 3px;
@@ -211,18 +250,18 @@
             img.onerror = () => { img.remove(); div.textContent = item.name.charAt(0); };
             div.appendChild(img);
 
-            // --- Tooltip with name + description ---
+            // --- In-game tooltip ---
             const tooltip = document.createElement('span');
             tooltip.className = 'tooltip';
-            // Use plaintext (short desc) if available, otherwise empty
-            const desc = item.plaintext || '';
-            tooltip.innerHTML = `<strong>${item.name}</strong>${desc}`;
+            // Data Dragon's item.description contains the full HTML tooltip (stats, passives, etc.)
+            const descriptionHTML = item.description || '';
+            tooltip.innerHTML = `<strong>${item.name}</strong>${descriptionHTML}`;
             div.appendChild(tooltip);
 
             if (state.selectedItems.has(id)) div.classList.add('selected');
             div.addEventListener('click', () => toggleItem(id, div));
 
-            // Smart tooltip positioning (same as augments)
+            // Smart tooltip positioning
             div.addEventListener('mouseenter', () => {
               const gridRect = itemGrid.getBoundingClientRect();
               const iconRect = div.getBoundingClientRect();
