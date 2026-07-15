@@ -39,7 +39,6 @@
     .hotbar {
       display: flex;
       gap: 4px;
-      flex-wrap: wrap;
       min-height: 40px;
       margin-bottom: 8px;
       padding: 4px;
@@ -47,28 +46,44 @@
       border-radius: 6px;
       align-items: center;
     }
-    .hotbar-item {
+    .hotbar-slot {
       width: 36px;
       height: 36px;
-      border: 2px solid transparent;
+      border: 2px dashed #333;     /* empty slot style */
       border-radius: 4px;
-      cursor: pointer;
       position: relative;
-      transition: border-color 0.2s;
+      background: #111;
     }
-    .hotbar-item:hover {
+    .hotbar-slot.filled {
+      border: 2px solid #555;
+      cursor: pointer;
+    }
+    .hotbar-slot.filled:hover {
       border-color: #c8aa6e;
     }
-    .hotbar-item img {
+    .hotbar-slot img {
       width: 100%;
       height: 100%;
       object-fit: cover;
       border-radius: 3px;
     }
-    .hotbar-placeholder {
-      color: #666;
-      font-size: 0.8rem;
-      margin-left: 4px;
+    .hotbar-slot .remove-x {
+      display: none;
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      width: 16px;
+      height: 16px;
+      background: #c0392b;
+      border-radius: 50%;
+      color: #fff;
+      font-size: 10px;
+      line-height: 16px;
+      text-align: center;
+      cursor: pointer;
+    }
+    .hotbar-slot.filled:hover .remove-x {
+      display: block;
     }
   </style>
 </head>
@@ -291,75 +306,99 @@
         return ['#3c5a77','#5e4b3c','#2e5a4b','#6b4e5a','#4a6e5f'][index % 5];
       }
 
-      // ---------- Hotbar updates ----------
+      // ---------- Hotbar updates (always 6 slots) ----------
       function updateSelectedItemsBar() {
         selectedItemsBar.innerHTML = '';
-        if (state.selectedItems.size === 0) {
-          selectedItemsBar.innerHTML = '<span class="hotbar-placeholder">No items selected</span>';
-          return;
+        const selectedArray = Array.from(state.selectedItems);
+        for (let i = 0; i < MAX_SELECTIONS; i++) {
+          const slot = document.createElement('div');
+          slot.className = 'hotbar-slot';
+          if (i < selectedArray.length) {
+            // Filled slot
+            const id = selectedArray[i];
+            const item = itemsData[id];
+            slot.classList.add('filled');
+            const img = document.createElement('img');
+            img.src = `https://ddragon.leagueoflegends.com/cdn/${ddVersion}/img/item/${id}.png`;
+            img.alt = item ? item.name : '';
+            slot.appendChild(img);
+
+            // Remove X button
+            const removeBtn = document.createElement('span');
+            removeBtn.className = 'remove-x';
+            removeBtn.textContent = '×';
+            removeBtn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              state.selectedItems.delete(id);
+              updateSelectedItemsBar();
+              const gridItem = document.querySelector(`#itemGrid .selection-item[data-item-id="${id}"]`);
+              if (gridItem) gridItem.classList.remove('selected');
+              calculateStats();
+            });
+            slot.appendChild(removeBtn);
+
+            slot.addEventListener('click', () => {
+              state.selectedItems.delete(id);
+              updateSelectedItemsBar();
+              const gridItem = document.querySelector(`#itemGrid .selection-item[data-item-id="${id}"]`);
+              if (gridItem) gridItem.classList.remove('selected');
+              calculateStats();
+            });
+          }
+          // Empty slot remains as dashed border
+          selectedItemsBar.appendChild(slot);
         }
-        state.selectedItems.forEach(id => {
-          const item = itemsData[id];
-          if (!item) return;
-          const div = document.createElement('div');
-          div.className = 'hotbar-item';
-          const img = document.createElement('img');
-          img.src = `https://ddragon.leagueoflegends.com/cdn/${ddVersion}/img/item/${id}.png`;
-          img.alt = item.name;
-          img.title = item.name + ' (click to remove)';
-          div.appendChild(img);
-          div.addEventListener('click', (e) => {
-            e.stopPropagation();
-            // Deselect this item
-            state.selectedItems.delete(id);
-            updateSelectedItemsBar();
-            // Update the selection grid highlight
-            const gridItem = document.querySelector(`#itemGrid .selection-item[data-item-id="${id}"]`);
-            if (gridItem) gridItem.classList.remove('selected');
-            calculateStats();
-          });
-          selectedItemsBar.appendChild(div);
-        });
       }
 
       function updateSelectedAugmentsBar() {
         selectedAugmentsBar.innerHTML = '';
-        if (state.selectedAugments.size === 0) {
-          selectedAugmentsBar.innerHTML = '<span class="hotbar-placeholder">No augments selected</span>';
-          return;
-        }
-        state.selectedAugments.forEach(index => {
-          const aug = augments[index];
-          if (!aug) return;
-          const div = document.createElement('div');
-          div.className = 'hotbar-item';
-          // Show icon if available, otherwise fallback letter
-          if (aug.icon) {
-            const img = document.createElement('img');
-            img.src = aug.icon;
-            img.alt = aug.name;
-            img.title = aug.name + ' (click to remove)';
-            div.appendChild(img);
-          } else {
-            div.style.backgroundColor = getColor(index);
-            div.style.display = 'flex';
-            div.style.alignItems = 'center';
-            div.style.justifyContent = 'center';
-            div.style.fontSize = '0.7rem';
-            div.style.fontWeight = 'bold';
-            div.textContent = aug.name.charAt(0);
-            div.title = aug.name + ' (click to remove)';
+        const selectedArray = Array.from(state.selectedAugments);
+        for (let i = 0; i < MAX_SELECTIONS; i++) {
+          const slot = document.createElement('div');
+          slot.className = 'hotbar-slot';
+          if (i < selectedArray.length) {
+            const index = selectedArray[i];
+            const aug = augments[index];
+            slot.classList.add('filled');
+            
+            if (aug && aug.icon) {
+              const img = document.createElement('img');
+              img.src = aug.icon;
+              img.alt = aug.name;
+              slot.appendChild(img);
+            } else if (aug) {
+              slot.style.backgroundColor = getColor(index);
+              slot.style.display = 'flex';
+              slot.style.alignItems = 'center';
+              slot.style.justifyContent = 'center';
+              slot.style.fontSize = '0.7rem';
+              slot.style.fontWeight = 'bold';
+              slot.textContent = aug.name.charAt(0);
+            }
+
+            const removeBtn = document.createElement('span');
+            removeBtn.className = 'remove-x';
+            removeBtn.textContent = '×';
+            removeBtn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              state.selectedAugments.delete(index);
+              updateSelectedAugmentsBar();
+              const gridItem = document.querySelector(`#augmentGrid .selection-item[data-augment-index="${index}"]`);
+              if (gridItem) gridItem.classList.remove('selected');
+              calculateStats();
+            });
+            slot.appendChild(removeBtn);
+
+            slot.addEventListener('click', () => {
+              state.selectedAugments.delete(index);
+              updateSelectedAugmentsBar();
+              const gridItem = document.querySelector(`#augmentGrid .selection-item[data-augment-index="${index}"]`);
+              if (gridItem) gridItem.classList.remove('selected');
+              calculateStats();
+            });
           }
-          div.addEventListener('click', (e) => {
-            e.stopPropagation();
-            state.selectedAugments.delete(index);
-            updateSelectedAugmentsBar();
-            const gridItem = document.querySelector(`#augmentGrid .selection-item[data-augment-index="${index}"]`);
-            if (gridItem) gridItem.classList.remove('selected');
-            calculateStats();
-          });
-          selectedAugmentsBar.appendChild(div);
-        });
+          selectedAugmentsBar.appendChild(slot);
+        }
       }
 
       // ---------- Selection handlers ----------
@@ -372,15 +411,11 @@
 
       function toggleItem(id, element) {
         if (state.selectedItems.has(id)) {
-          // Deselect
           state.selectedItems.delete(id);
           element.classList.remove('selected');
         } else {
-          // Select – check limit
-          if (state.selectedItems.size >= MAX_SELECTIONS) {
-            alert(`You can only select up to ${MAX_SELECTIONS} items.`);
-            return;
-          }
+          // Silently ignore if already at max
+          if (state.selectedItems.size >= MAX_SELECTIONS) return;
           state.selectedItems.add(id);
           element.classList.add('selected');
         }
@@ -393,10 +428,7 @@
           state.selectedAugments.delete(index);
           element.classList.remove('selected');
         } else {
-          if (state.selectedAugments.size >= MAX_SELECTIONS) {
-            alert(`You can only select up to ${MAX_SELECTIONS} augments.`);
-            return;
-          }
+          if (state.selectedAugments.size >= MAX_SELECTIONS) return;
           state.selectedAugments.add(index);
           element.classList.add('selected');
         }
