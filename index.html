@@ -17,7 +17,7 @@
         <input type="number" id="levelInput" value="1" min="1" max="18">
       </div>
       <div class="selection-grid" id="championGrid">
-        <!-- Champions appear here -->
+        <p style="color:#aaa; text-align:center;">Loading champions…</p>
       </div>
     </div>
 
@@ -25,7 +25,7 @@
     <div class="section items-section">
       <h2>Pick Items</h2>
       <div class="selection-grid" id="itemGrid">
-        <!-- Items appear here -->
+        <p style="color:#aaa; text-align:center;">Loading items…</p>
       </div>
     </div>
 
@@ -33,7 +33,7 @@
     <div class="section augments-section">
       <h2>Pick Augments</h2>
       <div class="selection-grid" id="augmentGrid">
-        <!-- Augments appear here -->
+        <!-- Augments will be rendered from hardcoded data -->
       </div>
     </div>
 
@@ -41,7 +41,7 @@
     <div class="section stats-section">
       <h2>Final Stats</h2>
       <table class="stats-table" id="statsTable">
-        <!-- Stats rows appear here -->
+        <tr><td colspan="2">Select a champion to begin</td></tr>
       </table>
     </div>
 
@@ -58,9 +58,10 @@
       };
 
       // ---------- Data containers ----------
-      let championsData = {};  // from DDragon
-      let itemsData = {};     // from DDragon
-      let augments = [];      // hardcoded + parsed
+      let championsData = {};
+      let itemsData = {};
+      let augments = [];
+      let ddVersion = '14.11.1'; // will be updated dynamically
 
       // ---------- DOM elements ----------
       const championGrid = document.getElementById('championGrid');
@@ -69,42 +70,57 @@
       const levelInput = document.getElementById('levelInput');
       const statsTable = document.getElementById('statsTable');
 
-      // ---------- Load game data ----------
+      // ---------- Load all game data ----------
       async function loadData() {
-        const versionUrl = 'https://ddragon.leagueoflegends.com/api/versions.json';
-        const versions = await fetch(versionUrl).then(r => r.json());
-        const latest = versions[0];
+        try {
+          // 1. Get latest Data Dragon version
+          const versionsRes = await fetch('https://ddragon.leagueoflegends.com/api/versions.json');
+          const versions = await versionsRes.json();
+          ddVersion = versions[0];
 
-        const [champsRes, itemsRes] = await Promise.all([
-          fetch(`https://ddragon.leagueoflegends.com/cdn/${latest}/data/en_US/champion.json`),
-          fetch(`https://ddragon.leagueoflegends.com/cdn/${latest}/data/en_US/item.json`)
-        ]);
+          // 2. Fetch champions & items in parallel
+          const [champsRes, itemsRes] = await Promise.all([
+            fetch(`https://ddragon.leagueoflegends.com/cdn/${ddVersion}/data/en_US/champion.json`),
+            fetch(`https://ddragon.leagueoflegends.com/cdn/${ddVersion}/data/en_US/item.json`)
+          ]);
 
-        const champsJson = await champsRes.json();
-        const itemsJson = await itemsRes.json();
+          const champsJson = await champsRes.json();
+          const itemsJson = await itemsRes.json();
 
-        championsData = champsJson.data;
-        itemsData = itemsJson.data;
+          championsData = champsJson.data;
+          itemsData = itemsJson.data;
 
-        // Hardcoded augments (replace with fetched JSON later)
-        augments = [
-          { name: "Goliath's Might", desc: "Gain 300 bonus health and 10% increased size.", effects: { health: 300 } },
-          { name: "Blade Waltz", desc: "Gain 30 adaptive force (prefers AD).", effects: { adaptiveForce: 30 } },
-          { name: "Courage of the Colossus", desc: "Gain 20 armor and 20 magic resistance.", effects: { armor: 20, magicResistance: 20 } },
-          { name: "Infernal Conduit", desc: "Your attacks burn for 5% max health magic damage.", effects: {} },
-          { name: "Windspeaker's Blessing", desc: "Heals and shields are 20% stronger.", effects: {} }
-        ];
+          // 3. Hardcoded augments (replace with your own later)
+          augments = [
+            { name: "Goliath's Might", desc: "Gain 300 bonus health and 10% increased size.", effects: { health: 300 } },
+            { name: "Blade Waltz", desc: "Gain 30 adaptive force (prefers AD).", effects: { adaptiveForce: 30 } },
+            { name: "Courage of the Colossus", desc: "Gain 20 armor and 20 magic resistance.", effects: { armor: 20, magicResistance: 20 } },
+            { name: "Infernal Conduit", desc: "Your attacks burn for 5% max health magic damage.", effects: {} },
+            { name: "Windspeaker's Blessing", desc: "Heals and shields are 20% stronger.", effects: {} }
+          ];
 
-        renderChampions();
-        renderItems();
-        renderAugments();
-        calculateStats();
+          // 4. Render all UI
+          renderChampions();
+          renderItems();
+          renderAugments();
+          calculateStats();
+
+        } catch (error) {
+          console.error('Failed to load data:', error);
+          championGrid.innerHTML = '<p style="color:red;">Failed to load champions.</p>';
+          itemGrid.innerHTML = '<p style="color:red;">Failed to load items.</p>';
+        }
       }
 
-      // ---------- Rendering functions ----------
+      // ---------- Render functions ----------
       function renderChampions() {
         championGrid.innerHTML = '';
-        for (const [key, champ] of Object.entries(championsData)) {
+        const champArray = Object.entries(championsData);
+        if (champArray.length === 0) {
+          championGrid.innerHTML = '<p>No champion data.</p>';
+          return;
+        }
+        for (const [key, champ] of champArray) {
           const div = document.createElement('div');
           div.className = 'selection-item';
           div.dataset.championKey = key;
@@ -120,38 +136,13 @@
 
       function renderItems() {
         itemGrid.innerHTML = '';
-        for (const [id, item] of Object.entries(itemsData)) {
-          // Filter out consumables / trinkets / basic items with no total gold
-          if (!item.gold || !item.gold.total || item.gold.total <= 0) continue;
-          if (item.tags && (item.tags.includes('Trinket') || item.tags.includes('Consumable') || item.tags.includes('GoldPer'))) continue;
-
-          const div = document.createElement('div');
-          div.className = 'selection-item';
-          div.dataset.itemId = id;
-          const img = document.createElement('img');
-          img.src = `https://ddragon.leagueoflegends.com/cdn/${document.querySelector('script')?.src?.match(/cdn\/([\d.]+)/)?.[1] || '14.11.1'}/img/item/${id}.png`; // need version, we'll get it from global
-          img.alt = item.name;
-          div.appendChild(img);
-          if (state.selectedItems.has(id)) div.classList.add('selected');
-          div.addEventListener('click', () => toggleItem(id, div));
-          itemGrid.appendChild(div);
+        const itemArray = Object.entries(itemsData);
+        if (itemArray.length === 0) {
+          itemGrid.innerHTML = '<p>No item data.</p>';
+          return;
         }
-      }
-
-      // Helper to get current DDragon version from the item image URL (set after load)
-      let ddVersion = '14.11.1'; // default fallback, updated in loadData
-      async function loadData() {
-        // ... (keep previous loadData but capture version)
-        const versionUrl = 'https://ddragon.leagueoflegends.com/api/versions.json';
-        const versions = await fetch(versionUrl).then(r => r.json());
-        ddVersion = versions[0]; // <-- store globally
-        // ... rest
-      }
-
-      // Update renderItems to use ddVersion:
-      function renderItems() {
-        itemGrid.innerHTML = '';
-        for (const [id, item] of Object.entries(itemsData)) {
+        for (const [id, item] of itemArray) {
+          // Exclude consumables, trinkets, and items without gold cost
           if (!item.gold || !item.gold.total || item.gold.total <= 0) continue;
           if (item.tags && (item.tags.includes('Trinket') || item.tags.includes('Consumable') || item.tags.includes('GoldPer'))) continue;
 
@@ -174,7 +165,7 @@
           const div = document.createElement('div');
           div.className = 'selection-item';
           div.dataset.augmentIndex = index;
-          // Simple placeholder: first letter of augment name + background color
+          // Colored placeholder with first letter
           div.style.backgroundColor = getColorForAugment(index);
           div.style.display = 'flex';
           div.style.alignItems = 'center';
@@ -194,7 +185,6 @@
         });
       }
 
-      // Simple color cycling for augment placeholders
       function getColorForAugment(index) {
         const colors = ['#3c5a77', '#5e4b3c', '#2e5a4b', '#6b4e5a', '#4a6e5f'];
         return colors[index % colors.length];
@@ -202,7 +192,6 @@
 
       // ---------- Selection handlers ----------
       function selectChampion(key, element) {
-        // Remove previous selection
         document.querySelectorAll('#championGrid .selection-item.selected').forEach(el => el.classList.remove('selected'));
         state.selectedChampion = key;
         element.classList.add('selected');
@@ -231,7 +220,6 @@
         calculateStats();
       }
 
-      // ---------- Level change ----------
       levelInput.addEventListener('input', () => {
         state.level = parseInt(levelInput.value) || 1;
         calculateStats();
@@ -255,7 +243,6 @@
         const champ = championsData[state.selectedChampion];
         const level = state.level;
 
-        // Base stats
         const baseStats = {
           health: getChampionStat(champ, level, 'hp', 'hpperlevel'),
           mana: getChampionStat(champ, level, 'mp', 'mpperlevel'),
@@ -265,7 +252,7 @@
           abilityPower: 0
         };
 
-        // Item bonuses
+        // Items
         const itemBonuses = { health: 0, mana: 0, armor: 0, magicResistance: 0, attackDamage: 0, abilityPower: 0 };
         state.selectedItems.forEach(id => {
           const item = itemsData[id];
@@ -283,7 +270,7 @@
           }
         });
 
-        // Augment bonuses
+        // Augments
         const augmentBonuses = { health: 0, mana: 0, armor: 0, magicResistance: 0, attackDamage: 0, abilityPower: 0, adaptiveForce: 0 };
         state.selectedAugments.forEach(idx => {
           const aug = augments[idx];
@@ -294,7 +281,7 @@
           }
         });
 
-        // Adaptive force logic
+        // Adaptive force
         let adBonus = itemBonuses.attackDamage + augmentBonuses.attackDamage;
         let apBonus = itemBonuses.abilityPower + augmentBonuses.abilityPower;
         const adapt = augmentBonuses.adaptiveForce;
@@ -318,7 +305,7 @@
           .join('');
       }
 
-      // ---------- Kick everything off ----------
+      // Start loading data
       loadData();
     })();
   </script>
