@@ -2,8 +2,10 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
 const fs = require('fs');
+const path = require('path');
 
 const WIKI_URL = 'https://wiki.leagueoflegends.com/en-us/Arena_(League_of_Legends)/Augments';
+const ICON_DIR = './augment_icons';
 
 (async () => {
   try {
@@ -13,7 +15,6 @@ const WIKI_URL = 'https://wiki.leagueoflegends.com/en-us/Arena_(League_of_Legend
 
     const augments = [];
 
-    // Find the correct table by checking for "Augment" header
     $('table.wikitable').each((i, table) => {
       const headers = $(table).find('tr th');
       let hasAugmentHeader = false;
@@ -22,35 +23,36 @@ const WIKI_URL = 'https://wiki.leagueoflegends.com/en-us/Arena_(League_of_Legend
       });
       if (!hasAugmentHeader) return;
 
-      // Data rows
       $(table).find('tbody tr').each((j, row) => {
         const cols = $(row).find('td');
         if (cols.length < 2) return;
 
-        // 1. Icon – first image in the first column
         const iconCol = $(cols[0]);
-        const img = iconCol.find('img').first();
+
+        // Extract icon URL (handles lazy loading)
+        let img = iconCol.find('img').first();
         let iconUrl = '';
+
         if (img.length) {
-          // The src may be relative or absolute; ensure it's absolute
-          let src = img.attr('src') || '';
-          if (src.startsWith('/')) {
-            src = 'https://wiki.leagueoflegends.com' + src;
-          } else if (src.startsWith('//')) {
-            src = 'https:' + src;
+          let src = img.attr('data-src') || img.attr('src') || img.attr('data-original') || '';
+          if (src && src !== '' && !src.includes('data:image/gif;base64')) {
+            if (src.startsWith('//')) {
+              src = 'https:' + src;
+            } else if (src.startsWith('/')) {
+              src = 'https://wiki.leagueoflegends.com' + src;
+            } else if (!src.startsWith('http')) {
+              src = 'https://wiki.leagueoflegends.com/' + src;
+            }
+            iconUrl = src;
           }
-          iconUrl = src;
         }
 
-        // 2. Name – text in first column (strip quotes/formatting)
         const name = iconCol.text().trim();
-
-        // 3. Description – second column
         const desc = $(cols[1]).text().trim();
 
         if (!name || name === 'Augment' || desc.startsWith('This table')) return;
 
-        // Parse numeric bonuses as before
+        // Parse numeric bonuses (unchanged)
         const effects = {};
         const healthMatch = desc.match(/(\+?\d+)\s*(bonus\s*)?health/i);
         if (healthMatch) effects.health = parseInt(healthMatch[1]);
@@ -74,12 +76,42 @@ const WIKI_URL = 'https://wiki.leagueoflegends.com/en-us/Arena_(League_of_Legend
       });
     });
 
-    // Deduplicate by name
+    // Remove duplicates
     const uniqueAugments = augments.filter((v, i, a) => a.findIndex(t => t.name === v.name) === i);
 
-    console.log(`Found ${uniqueAugments.length} augments.`);
+    // Create output directory if missing
+    if (!fs.existsSync(ICON_DIR)) {
+      fs.mkdirSync(ICON_DIR, { recursive: true });
+    }
+
+    console.log(`Found ${uniqueAugments.length} augments. Downloading icons...`);
+
+    // Download each icon and update path
+    for (const aug of uniqueAugments) {
+      if (aug.icon) {
+        try {
+          const fileExt = path.extname(new URL(aug.icon).pathname) || '.png';
+          const safeName = aug.name.replace(/[\/:*?"<>|]/g, '_');
+          const fileName = safeName + fileExt;
+          const localPath = path.join(ICON_DIR, fileName);
+
+          console.log(`  Downloading: ${aug.name}`);
+
+          const response = await axios.get(aug.icon, { responseType: 'arraybuffer' });
+          fs.writeFileSync(localPath, response.data);
+
+          // Replace remote URL with local path (relative to HTML)
+          aug.icon = `augment_icons/${fileName}`;
+        } catch (err) {
+          console.warn(`  Failed to download icon for ${aug.name}: ${err.message}`);
+          // Keep the remote URL as fallback
+        }
+      }
+    }
+
+    // Save final JSON with local paths
     fs.writeFileSync('augments.json', JSON.stringify(uniqueAugments, null, 2));
-    console.log('Saved to augments.json');
+    console.log('Saved to augments.json with local icons.');
   } catch (err) {
     console.error('Scraping failed:', err.message);
   }
