@@ -5,6 +5,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>LoL Arena Stat Calculator</title>
   <link rel="stylesheet" href="styles.css">
+  <style>
+    /* Quick style for search inputs (you can also add to styles.css) */
+    .search-input {
+      width: 100%;
+      padding: 6px 10px;
+      margin-bottom: 8px;
+      background: #2a2e38;
+      border: 1px solid #444;
+      border-radius: 4px;
+      color: #e0e0e0;
+      font-size: 0.9rem;
+      outline: none;
+    }
+    .search-input::placeholder {
+      color: #888;
+    }
+    .search-input:focus {
+      border-color: #c8aa6e;
+    }
+  </style>
 </head>
 <body>
   <div class="main-grid">
@@ -12,6 +32,7 @@
     <!-- ========== CHAMPIONS (top‑left) ========== -->
     <div class="section champion-section">
       <h2>Pick a Champion</h2>
+      <input type="text" class="search-input" id="championSearch" placeholder="Search champions…">
       <div class="level-input-container">
         <label for="levelInput">Level:</label>
         <input type="number" id="levelInput" value="1" min="1" max="18">
@@ -24,6 +45,7 @@
     <!-- ========== ITEMS (top‑middle) ========== -->
     <div class="section items-section">
       <h2>Pick Items</h2>
+      <input type="text" class="search-input" id="itemSearch" placeholder="Search items…">
       <div class="selection-grid" id="itemGrid">
         <p style="color:#aaa; text-align:center;">Loading items…</p>
       </div>
@@ -32,6 +54,7 @@
     <!-- ========== AUGMENTS (top‑right) ========== -->
     <div class="section augments-section">
       <h2>Pick Augments</h2>
+      <input type="text" class="search-input" id="augmentSearch" placeholder="Search augments…">
       <div class="selection-grid" id="augmentGrid">
         <!-- Augments will be rendered from hardcoded data -->
       </div>
@@ -61,7 +84,7 @@
       let championsData = {};
       let itemsData = {};
       let augments = [];
-      let ddVersion = '14.11.1'; // will be updated dynamically
+      let ddVersion = '14.11.1';
 
       // ---------- DOM elements ----------
       const championGrid = document.getElementById('championGrid');
@@ -69,16 +92,17 @@
       const augmentGrid = document.getElementById('augmentGrid');
       const levelInput = document.getElementById('levelInput');
       const statsTable = document.getElementById('statsTable');
+      const championSearch = document.getElementById('championSearch');
+      const itemSearch = document.getElementById('itemSearch');
+      const augmentSearch = document.getElementById('augmentSearch');
 
       // ---------- Load all game data ----------
       async function loadData() {
         try {
-          // 1. Get latest Data Dragon version
           const versionsRes = await fetch('https://ddragon.leagueoflegends.com/api/versions.json');
           const versions = await versionsRes.json();
           ddVersion = versions[0];
 
-          // 2. Fetch champions & items in parallel
           const [champsRes, itemsRes] = await Promise.all([
             fetch(`https://ddragon.leagueoflegends.com/cdn/${ddVersion}/data/en_US/champion.json`),
             fetch(`https://ddragon.leagueoflegends.com/cdn/${ddVersion}/data/en_US/item.json`)
@@ -90,7 +114,6 @@
           championsData = champsJson.data;
           itemsData = itemsJson.data;
 
-          // 3. Hardcoded augments (replace with your own later)
           augments = [
             { name: "Goliath's Might", desc: "Gain 300 bonus health and 10% increased size.", effects: { health: 300 } },
             { name: "Blade Waltz", desc: "Gain 30 adaptive force (prefers AD).", effects: { adaptiveForce: 30 } },
@@ -99,7 +122,6 @@
             { name: "Windspeaker's Blessing", desc: "Heals and shields are 20% stronger.", effects: {} }
           ];
 
-          // 4. Render all UI
           renderChampions();
           renderItems();
           renderAugments();
@@ -113,27 +135,26 @@
       }
 
       // ---------- Render functions ----------
-        function renderChampions() {
+      function renderChampions() {
         championGrid.innerHTML = '';
         const champArray = Object.entries(championsData);
         if (champArray.length === 0) {
-            championGrid.innerHTML = '<p>No champion data.</p>';
-            return;
+          championGrid.innerHTML = '<p>No champion data.</p>';
+          return;
         }
         for (const [key, champ] of champArray) {
-            const div = document.createElement('div');
-            div.className = 'selection-item';
-            div.dataset.championKey = key;
-            const img = document.createElement('img');
-            // FIXED: use ddVersion in the URL
-            img.src = `https://ddragon.leagueoflegends.com/cdn/${ddVersion}/img/champion/${key}.png`;
-            img.alt = champ.name;
-            div.appendChild(img);
-            if (state.selectedChampion === key) div.classList.add('selected');
-            div.addEventListener('click', () => selectChampion(key, div));
-            championGrid.appendChild(div);
+          const div = document.createElement('div');
+          div.className = 'selection-item';
+          div.dataset.championKey = key;
+          const img = document.createElement('img');
+          img.src = `https://ddragon.leagueoflegends.com/cdn/${ddVersion}/img/champion/${key}.png`;
+          img.alt = champ.name;
+          div.appendChild(img);
+          if (state.selectedChampion === key) div.classList.add('selected');
+          div.addEventListener('click', () => selectChampion(key, div));
+          championGrid.appendChild(div);
         }
-        }
+      }
 
       function renderItems() {
         itemGrid.innerHTML = '';
@@ -143,7 +164,6 @@
           return;
         }
         for (const [id, item] of itemArray) {
-          // Exclude consumables, trinkets, and items without gold cost
           if (!item.gold || !item.gold.total || item.gold.total <= 0) continue;
           if (item.tags && (item.tags.includes('Trinket') || item.tags.includes('Consumable') || item.tags.includes('GoldPer'))) continue;
 
@@ -166,7 +186,6 @@
           const div = document.createElement('div');
           div.className = 'selection-item';
           div.dataset.augmentIndex = index;
-          // Colored placeholder with first letter
           div.style.backgroundColor = getColorForAugment(index);
           div.style.display = 'flex';
           div.style.alignItems = 'center';
@@ -174,7 +193,6 @@
           div.style.fontSize = '1.2rem';
           div.style.fontWeight = 'bold';
           div.textContent = aug.name.charAt(0);
-          // Tooltip
           const tooltip = document.createElement('span');
           tooltip.className = 'tooltip';
           tooltip.textContent = aug.desc;
@@ -190,6 +208,40 @@
         const colors = ['#3c5a77', '#5e4b3c', '#2e5a4b', '#6b4e5a', '#4a6e5f'];
         return colors[index % colors.length];
       }
+
+      // ---------- Search filtering ----------
+      championSearch.addEventListener('input', () => {
+        const query = championSearch.value.toLowerCase();
+        const items = championGrid.querySelectorAll('.selection-item');
+        items.forEach(item => {
+          const key = item.dataset.championKey;
+          const champ = championsData[key];
+          const visible = champ ? champ.name.toLowerCase().includes(query) : false;
+          item.style.display = visible ? '' : 'none';
+        });
+      });
+
+      itemSearch.addEventListener('input', () => {
+        const query = itemSearch.value.toLowerCase();
+        const items = itemGrid.querySelectorAll('.selection-item');
+        items.forEach(item => {
+          const id = item.dataset.itemId;
+          const itemObj = itemsData[id];
+          const visible = itemObj ? itemObj.name.toLowerCase().includes(query) : false;
+          item.style.display = visible ? '' : 'none';
+        });
+      });
+
+      augmentSearch.addEventListener('input', () => {
+        const query = augmentSearch.value.toLowerCase();
+        const items = augmentGrid.querySelectorAll('.selection-item');
+        items.forEach(item => {
+          const index = parseInt(item.dataset.augmentIndex);
+          const aug = augments[index];
+          const visible = aug ? aug.name.toLowerCase().includes(query) : false;
+          item.style.display = visible ? '' : 'none';
+        });
+      });
 
       // ---------- Selection handlers ----------
       function selectChampion(key, element) {
@@ -226,7 +278,7 @@
         calculateStats();
       });
 
-      // ---------- Stat calculation ----------
+      // ---------- Stat calculation (unchanged) ----------
       function getChampionStat(champData, level, statBaseKey, statGrowthKey) {
         const base = champData.stats[statBaseKey];
         const growth = champData.stats[statGrowthKey];
@@ -253,7 +305,6 @@
           abilityPower: 0
         };
 
-        // Items
         const itemBonuses = { health: 0, mana: 0, armor: 0, magicResistance: 0, attackDamage: 0, abilityPower: 0 };
         state.selectedItems.forEach(id => {
           const item = itemsData[id];
@@ -271,7 +322,6 @@
           }
         });
 
-        // Augments
         const augmentBonuses = { health: 0, mana: 0, armor: 0, magicResistance: 0, attackDamage: 0, abilityPower: 0, adaptiveForce: 0 };
         state.selectedAugments.forEach(idx => {
           const aug = augments[idx];
@@ -282,7 +332,6 @@
           }
         });
 
-        // Adaptive force
         let adBonus = itemBonuses.attackDamage + augmentBonuses.attackDamage;
         let apBonus = itemBonuses.abilityPower + augmentBonuses.abilityPower;
         const adapt = augmentBonuses.adaptiveForce;
@@ -306,7 +355,7 @@
           .join('');
       }
 
-      // Start loading data
+      // Kick it off
       loadData();
     })();
   </script>
