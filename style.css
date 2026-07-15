@@ -1,0 +1,187 @@
+/* ---------- Global Reset & Body ---------- */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #0a0e14;
+  color: #e0e0e0;
+  height: 100vh;
+  overflow: hidden; /* prevent scrollbars if the grid fits the viewport */
+}
+
+/* ---------- Main Grid Layout ---------- */
+.main-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: 1fr auto; /* top sections share equal height, bottom auto */
+  height: 100vh;
+  gap: 8px;
+  padding: 8px;
+}
+
+/* Top three panels */
+.section {
+  background: #1a1e26;
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.section h2 {
+  font-size: 1.1rem;
+  margin-bottom: 8px;
+  color: #c8aa6e;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-bottom: 1px solid #333;
+  padding-bottom: 4px;
+}
+
+/* Assign areas */
+.champion-section {
+  grid-column: 1 / 2;
+  grid-row: 1 / 2;
+}
+
+.items-section {
+  grid-column: 2 / 3;
+  grid-row: 1 / 2;
+}
+
+.augments-section {
+  grid-column: 3 / 4;
+  grid-row: 1 / 2;
+}
+
+.stats-section {
+  grid-column: 1 / -1;  /* full width */
+  grid-row: 2 / 3;
+  background: #1a1e26;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+/* ---------- Icon Selection Grid (champions, items, augments) ---------- */
+.selection-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  overflow-y: auto;       /* scrollable if many icons */
+  align-content: flex-start;
+  flex: 1;
+}
+
+.selection-item {
+  width: 52px;
+  height: 52px;
+  border: 2px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  position: relative;
+}
+
+.selection-item:hover {
+  border-color: #c8aa6e;
+}
+
+/* Selected state */
+.selection-item.selected {
+  border-color: #f0e6d2;
+  background: rgba(200, 170, 110, 0.25);
+}
+
+.selection-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+/* Tooltip for augments (shown on hover) */
+.selection-item .tooltip {
+  display: none;
+  position: absolute;
+  bottom: 110%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #222;
+  color: #f0e6d2;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  z-index: 10;
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+
+.selection-item:hover .tooltip {
+  display: block;
+}
+
+/* ---------- Stats Table ---------- */
+.stats-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+  font-size: 1.1rem;
+}
+
+.stats-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid #2a2e38;
+}
+
+.stats-table td:first-child {
+  font-weight: bold;
+  color: #c8aa6e;
+  width: 40%;
+}
+
+.stats-table td:last-child {
+  text-align: right;
+}
+
+/* ---------- Level Input ---------- */
+.level-input-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 6px 0;
+}
+
+.level-input-container label {
+  margin-right: 8px;
+  font-size: 0.9rem;
+}
+
+.level-input-container input {
+  width: 55px;
+  padding: 4px;
+  background: #2a2e38;
+  border: 1px solid #444;
+  border-radius: 4px;
+  color: #e0e0e0;
+  text-align: center;
+}
+
+/* ---------- Scrollbar Styling ---------- */
+.selection-grid::-webkit-scrollbar {
+  width: 6px;
+}
+.selection-grid::-webkit-scrollbar-track {
+  background: #111;
+  border-radius: 3px;
+}
+.selection-grid::-webkit-scrollbar-thumb {
+  background: #555;
+  border-radius: 3px;
+}
