@@ -113,26 +113,27 @@
       }
 
       // ---------- Render functions ----------
-      function renderChampions() {
+        function renderChampions() {
         championGrid.innerHTML = '';
         const champArray = Object.entries(championsData);
         if (champArray.length === 0) {
-          championGrid.innerHTML = '<p>No champion data.</p>';
-          return;
+            championGrid.innerHTML = '<p>No champion data.</p>';
+            return;
         }
         for (const [key, champ] of champArray) {
-          const div = document.createElement('div');
-          div.className = 'selection-item';
-          div.dataset.championKey = key;
-          const img = document.createElement('img');
-          img.src = `https://ddragon.leagueoflegends.com/cdn/img/champion/${key}.png`;
-          img.alt = champ.name;
-          div.appendChild(img);
-          if (state.selectedChampion === key) div.classList.add('selected');
-          div.addEventListener('click', () => selectChampion(key, div));
-          championGrid.appendChild(div);
+            const div = document.createElement('div');
+            div.className = 'selection-item';
+            div.dataset.championKey = key;
+            const img = document.createElement('img');
+            // FIXED: use ddVersion in the URL
+            img.src = `https://ddragon.leagueoflegends.com/cdn/${ddVersion}/img/champion/${key}.png`;
+            img.alt = champ.name;
+            div.appendChild(img);
+            if (state.selectedChampion === key) div.classList.add('selected');
+            div.addEventListener('click', () => selectChampion(key, div));
+            championGrid.appendChild(div);
         }
-      }
+        }
 
       function renderItems() {
         itemGrid.innerHTML = '';
