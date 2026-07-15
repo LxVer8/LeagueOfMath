@@ -6,7 +6,6 @@
   <title>LoL Arena Stat Calculator</title>
   <link rel="stylesheet" href="styles.css">
   <style>
-    /* Quick style for search inputs (you can also add to styles.css) */
     .search-input {
       width: 100%;
       padding: 6px 10px;
@@ -29,7 +28,7 @@
 <body>
   <div class="main-grid">
     
-    <!-- ========== CHAMPIONS (top‑left) ========== -->
+    <!-- CHAMPIONS -->
     <div class="section champion-section">
       <h2>Pick a Champion</h2>
       <input type="text" class="search-input" id="championSearch" placeholder="Search champions…">
@@ -42,7 +41,7 @@
       </div>
     </div>
 
-    <!-- ========== ITEMS (top‑middle) ========== -->
+    <!-- ITEMS -->
     <div class="section items-section">
       <h2>Pick Items</h2>
       <input type="text" class="search-input" id="itemSearch" placeholder="Search items…">
@@ -51,16 +50,16 @@
       </div>
     </div>
 
-    <!-- ========== AUGMENTS (top‑right) ========== -->
+    <!-- AUGMENTS -->
     <div class="section augments-section">
       <h2>Pick Augments</h2>
       <input type="text" class="search-input" id="augmentSearch" placeholder="Search augments…">
       <div class="selection-grid" id="augmentGrid">
-        <!-- Augments will be rendered from hardcoded data -->
+        <p style="color:#aaa; text-align:center;">Loading augments…</p>
       </div>
     </div>
 
-    <!-- ========== FINAL STATS (bottom) ========== -->
+    <!-- FINAL STATS -->
     <div class="section stats-section">
       <h2>Final Stats</h2>
       <table class="stats-table" id="statsTable">
@@ -80,13 +79,13 @@
         level: 1
       };
 
-      // ---------- Data containers ----------
+      // Data containers
       let championsData = {};
       let itemsData = {};
       let augments = [];
       let ddVersion = '14.11.1';
 
-      // ---------- DOM elements ----------
+      // DOM elements
       const championGrid = document.getElementById('championGrid');
       const itemGrid = document.getElementById('itemGrid');
       const augmentGrid = document.getElementById('augmentGrid');
@@ -97,35 +96,37 @@
       const augmentSearch = document.getElementById('augmentSearch');
 
       // ---------- Load all game data ----------
-        async function loadData() {
+      async function loadData() {
         try {
-            const versionsRes = await fetch('https://ddragon.leagueoflegends.com/api/versions.json');
-            const versions = await versionsRes.json();
-            ddVersion = versions[0];
+          const versionsRes = await fetch('https://ddragon.leagueoflegends.com/api/versions.json');
+          const versions = await versionsRes.json();
+          ddVersion = versions[0];
 
-            const [champsRes, itemsRes, augmentsRes] = await Promise.all([
+          const [champsRes, itemsRes, augmentsRes] = await Promise.all([
             fetch(`https://ddragon.leagueoflegends.com/cdn/${ddVersion}/data/en_US/champion.json`),
             fetch(`https://ddragon.leagueoflegends.com/cdn/${ddVersion}/data/en_US/item.json`),
-            fetch('augments.json')   // load the scraped file (place it next to your HTML)
-            ]);
+            fetch('augments.json')   // load local JSON
+          ]);
 
-            const champsJson = await champsRes.json();
-            const itemsJson = await itemsRes.json();
-            augments = await augmentsRes.json();   // this replaces the hardcoded array
+          const champsJson = await champsRes.json();
+          const itemsJson = await itemsRes.json();
+          augments = await augmentsRes.json();
 
-            championsData = champsJson.data;
-            itemsData = itemsJson.data;
+          championsData = champsJson.data;
+          itemsData = itemsJson.data;
 
-            renderChampions();
-            renderItems();
-            renderAugments();
-            calculateStats();
+          renderChampions();
+          renderItems();
+          renderAugments();
+          calculateStats();
 
         } catch (error) {
-            console.error('Failed to load data:', error);
-            // fallback UI ...
+          console.error('Failed to load data:', error);
+          championGrid.innerHTML = '<p style="color:red;">Failed to load champions.</p>';
+          itemGrid.innerHTML = '<p style="color:red;">Failed to load items.</p>';
+          augmentGrid.innerHTML = '<p style="color:red;">Failed to load augments. Make sure augments.json is present and you are using a local server.</p>';
         }
-        }
+      }
 
       // ---------- Render functions ----------
       function renderChampions() {
@@ -173,27 +174,32 @@
         }
       }
 
-        function renderAugments() {
+      function renderAugments() {
         augmentGrid.innerHTML = '';
         augments.forEach((aug, index) => {
-            const div = document.createElement('div');
-            div.className = 'selection-item';
-            div.dataset.augmentIndex = index;
+          const div = document.createElement('div');
+          div.className = 'selection-item';
+          div.dataset.augmentIndex = index;
 
-            // Try to display the icon
+          // Icon
+          if (aug.icon) {
             const img = document.createElement('img');
-            img.alt = aug.name;
-            if (aug.icon) {
             img.src = aug.icon;
+            img.alt = aug.name;
             img.onerror = () => {
-                // If image fails to load, fallback to placeholder
-                div.style.backgroundColor = getColorForAugment(index);
-                div.textContent = aug.name.charAt(0);
-                img.remove();
+              // Fallback to placeholder if image can't load
+              div.style.backgroundColor = getColorForAugment(index);
+              div.style.display = 'flex';
+              div.style.alignItems = 'center';
+              div.style.justifyContent = 'center';
+              div.style.fontSize = '1.2rem';
+              div.style.fontWeight = 'bold';
+              div.textContent = aug.name.charAt(0);
+              img.remove();
             };
             div.appendChild(img);
-            } else {
-            // No icon URL – use fallback directly
+          } else {
+            // No icon URL
             div.style.backgroundColor = getColorForAugment(index);
             div.style.display = 'flex';
             div.style.alignItems = 'center';
@@ -201,19 +207,35 @@
             div.style.fontSize = '1.2rem';
             div.style.fontWeight = 'bold';
             div.textContent = aug.name.charAt(0);
-            }
+          }
 
-            // Tooltip (always)
-            const tooltip = document.createElement('span');
-            tooltip.className = 'tooltip';
-            tooltip.textContent = aug.desc;
-            div.appendChild(tooltip);
+          // Tooltip
+          const tooltip = document.createElement('span');
+          tooltip.className = 'tooltip';
+          tooltip.textContent = aug.desc;
+          div.appendChild(tooltip);
 
-            if (state.selectedAugments.has(index)) div.classList.add('selected');
-            div.addEventListener('click', () => toggleAugment(index, div));
-            augmentGrid.appendChild(div);
+          if (state.selectedAugments.has(index)) div.classList.add('selected');
+          div.addEventListener('click', () => toggleAugment(index, div));
+          augmentGrid.appendChild(div);
         });
-        }
+      }
+
+      function getColorForAugment(index) {
+        const colors = ['#3c5a77', '#5e4b3c', '#2e5a4b', '#6b4e5a', '#4a6e5f'];
+        return colors[index % colors.length];
+      }
+
+      // ---------- Search filtering ----------
+      championSearch.addEventListener('input', () => {
+        const query = championSearch.value.toLowerCase();
+        const items = championGrid.querySelectorAll('.selection-item');
+        items.forEach(item => {
+          const key = item.dataset.championKey;
+          const champ = championsData[key];
+          item.style.display = (champ && champ.name.toLowerCase().includes(query)) ? '' : 'none';
+        });
+      });
 
       itemSearch.addEventListener('input', () => {
         const query = itemSearch.value.toLowerCase();
@@ -221,8 +243,7 @@
         items.forEach(item => {
           const id = item.dataset.itemId;
           const itemObj = itemsData[id];
-          const visible = itemObj ? itemObj.name.toLowerCase().includes(query) : false;
-          item.style.display = visible ? '' : 'none';
+          item.style.display = (itemObj && itemObj.name.toLowerCase().includes(query)) ? '' : 'none';
         });
       });
 
@@ -232,8 +253,7 @@
         items.forEach(item => {
           const index = parseInt(item.dataset.augmentIndex);
           const aug = augments[index];
-          const visible = aug ? aug.name.toLowerCase().includes(query) : false;
-          item.style.display = visible ? '' : 'none';
+          item.style.display = (aug && aug.name.toLowerCase().includes(query)) ? '' : 'none';
         });
       });
 
@@ -272,7 +292,7 @@
         calculateStats();
       });
 
-      // ---------- Stat calculation (unchanged) ----------
+      // ---------- Stat calculation ----------
       function getChampionStat(champData, level, statBaseKey, statGrowthKey) {
         const base = champData.stats[statBaseKey];
         const growth = champData.stats[statGrowthKey];
