@@ -20,7 +20,7 @@
     .selection-item.selected { border-color: #f0e6d2; background: rgba(200, 170, 110, 0.25); }
     .selection-item img { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; }
 
-    /* Tooltip – now with room for a bold name */
+    /* Tooltip styling */
     .tooltip {
       display: none;
       position: absolute;
@@ -40,7 +40,6 @@
       box-shadow: 0 2px 8px rgba(0,0,0,0.6);
       text-align: left;
     }
-
     .selection-item:hover .tooltip { display: block; }
 
     .tooltip strong {
@@ -211,8 +210,33 @@
             img.alt = item.name;
             img.onerror = () => { img.remove(); div.textContent = item.name.charAt(0); };
             div.appendChild(img);
+
+            // --- Tooltip with name + description ---
+            const tooltip = document.createElement('span');
+            tooltip.className = 'tooltip';
+            // Use plaintext (short desc) if available, otherwise empty
+            const desc = item.plaintext || '';
+            tooltip.innerHTML = `<strong>${item.name}</strong>${desc}`;
+            div.appendChild(tooltip);
+
             if (state.selectedItems.has(id)) div.classList.add('selected');
             div.addEventListener('click', () => toggleItem(id, div));
+
+            // Smart tooltip positioning (same as augments)
+            div.addEventListener('mouseenter', () => {
+              const gridRect = itemGrid.getBoundingClientRect();
+              const iconRect = div.getBoundingClientRect();
+              const tw = 220, pad = 4;
+              let left = iconRect.left + iconRect.width/2 - tw/2;
+              left = Math.min(Math.max(left, gridRect.left + pad), gridRect.right - tw - pad);
+              tooltip.style.left = (left - iconRect.left) + 'px';
+              tooltip.style.transform = 'none';
+            });
+            div.addEventListener('mouseleave', () => {
+              tooltip.style.left = '50%';
+              tooltip.style.transform = 'translateX(-50%)';
+            });
+
             itemGrid.appendChild(div);
           });
       }
@@ -240,10 +264,8 @@
             div.style.fontSize = '1.2rem'; div.style.fontWeight = 'bold';
           }
 
-          // --- Tooltip with name + description ---
           const tooltip = document.createElement('span');
           tooltip.className = 'tooltip';
-          // Include augment name in bold, then line break and description
           tooltip.innerHTML = `<strong>${aug.name}</strong>${aug.desc}`;
           div.appendChild(tooltip);
 
