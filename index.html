@@ -14,7 +14,7 @@
     .champion-section { grid-column: 1/2; grid-row: 1/2; }
     .items-section { grid-column: 2/3; grid-row: 1/2; }
     .augments-section { grid-column: 3/4; grid-row: 1/2; }
-    .stats-section { grid-column: 1/-1; grid-row: 2/3; }
+    .stats-section { grid-column: 1/-1; grid-row: 2/3; overflow-y: auto; }
     .selection-grid { display: flex; flex-wrap: wrap; gap: 6px; overflow-y: auto; align-content: flex-start; flex: 1; min-height: 0; }
     .selection-item { width: 52px; height: 52px; border: 2px solid transparent; border-radius: 6px; cursor: pointer; transition: border-color 0.2s, background 0.2s; position: relative; flex-shrink: 0; }
     .selection-item:hover { border-color: #c8aa6e; }
@@ -25,9 +25,9 @@
     .search-input { width: 100%; padding: 6px 10px; margin-bottom: 8px; background: #2a2e38; border: 1px solid #444; border-radius: 4px; color: #e0e0e0; font-size: 0.9rem; outline: none; }
     .search-input::placeholder { color: #888; }
     .search-input:focus { border-color: #c8aa6e; }
-    .stats-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 1.1rem; }
-    .stats-table td { padding: 8px 12px; border-bottom: 1px solid #2a2e38; }
-    .stats-table td:first-child { font-weight: bold; color: #c8aa6e; width: 40%; }
+    .stats-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 0.95rem; }
+    .stats-table td { padding: 6px 8px; border-bottom: 1px solid #2a2e38; }
+    .stats-table td:first-child { font-weight: bold; color: #c8aa6e; width: 50%; }
     .stats-table td:last-child { text-align: right; }
     .level-input-container { display: flex; align-items: center; justify-content: center; margin: 6px 0; }
     .level-input-container input { width: 55px; padding: 4px; background: #2a2e38; border: 1px solid #444; border-radius: 4px; color: #e0e0e0; text-align: center; }
@@ -35,61 +35,18 @@
     .selection-grid::-webkit-scrollbar-track { background: #111; border-radius: 3px; }
     .selection-grid::-webkit-scrollbar-thumb { background: #555; border-radius: 3px; }
 
-    /* ---------- Hotbar styles ---------- */
-    .hotbar {
-      display: flex;
-      gap: 4px;
-      min-height: 40px;
-      margin-bottom: 8px;
-      padding: 4px;
-      background: #0f1219;
-      border-radius: 6px;
-      align-items: center;
-    }
-    .hotbar-slot {
-      width: 36px;
-      height: 36px;
-      border: 2px dashed #333;     /* empty slot style */
-      border-radius: 4px;
-      position: relative;
-      background: #111;
-    }
-    .hotbar-slot.filled {
-      border: 2px solid #555;
-      cursor: pointer;
-    }
-    .hotbar-slot.filled:hover {
-      border-color: #c8aa6e;
-    }
-    .hotbar-slot img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      border-radius: 3px;
-    }
-    .hotbar-slot .remove-x {
-      display: none;
-      position: absolute;
-      top: -6px;
-      right: -6px;
-      width: 16px;
-      height: 16px;
-      background: #c0392b;
-      border-radius: 50%;
-      color: #fff;
-      font-size: 10px;
-      line-height: 16px;
-      text-align: center;
-      cursor: pointer;
-    }
-    .hotbar-slot.filled:hover .remove-x {
-      display: block;
-    }
+    /* ---------- Hotbar ---------- */
+    .hotbar { display: flex; gap: 4px; min-height: 40px; margin-bottom: 8px; padding: 4px; background: #0f1219; border-radius: 6px; align-items: center; }
+    .hotbar-slot { width: 36px; height: 36px; border: 2px dashed #333; border-radius: 4px; position: relative; background: #111; }
+    .hotbar-slot.filled { border: 2px solid #555; cursor: pointer; }
+    .hotbar-slot.filled:hover { border-color: #c8aa6e; }
+    .hotbar-slot img { width: 100%; height: 100%; object-fit: cover; border-radius: 3px; }
+    .hotbar-slot .remove-x { display: none; position: absolute; top: -6px; right: -6px; width: 16px; height: 16px; background: #c0392b; border-radius: 50%; color: #fff; font-size: 10px; line-height: 16px; text-align: center; }
+    .hotbar-slot.filled:hover .remove-x { display: block; }
   </style>
 </head>
 <body>
   <div class="main-grid">
-    
     <!-- CHAMPIONS -->
     <div class="section champion-section">
       <h2>Pick a Champion</h2>
@@ -120,9 +77,8 @@
     <!-- FINAL STATS -->
     <div class="section stats-section">
       <h2>Final Stats</h2>
-      <table class="stats-table" id="statsTable"><tr><td colspan="2">Select a champion to begin</td></tr></table>
+      <table class="stats-table" id="statsTable"><tr><td colspan="2">Select a champion</td></tr></table>
     </div>
-
   </div>
 
   <script>
@@ -130,19 +86,18 @@
       // ---------- State ----------
       const state = {
         selectedChampion: null,
-        selectedItems: new Set(),    // stores item IDs
-        selectedAugments: new Set(), // stores augment indices
+        selectedItems: new Set(),
+        selectedAugments: new Set(),
         level: 1
       };
       const MAX_SELECTIONS = 6;
 
-      // Data
       let championsData = {};
       let itemsData = {};
       let augments = [];
       let ddVersion = '';
 
-      // DOM elements
+      // DOM
       const championGrid = document.getElementById('championGrid');
       const itemGrid = document.getElementById('itemGrid');
       const augmentGrid = document.getElementById('augmentGrid');
@@ -176,41 +131,36 @@
           try {
             const augRes = await fetch('augments.json');
             if (augRes.ok) augments = await augRes.json();
-            else throw new Error('File not found');
-          } catch (e) {
-            console.warn('augments.json missing – using empty list');
-            augments = [];
-          }
+          } catch (e) { console.warn('augments.json missing'); augments = []; }
 
-          renderChampions();
-          renderItems();
-          renderAugments();
-          updateSelectedItemsBar();
-          updateSelectedAugmentsBar();
-          calculateStats();
+          renderAll();
         } catch (error) {
-          console.error('Core data loading error:', error);
-          championGrid.innerHTML = '<p style="color:red;">Failed to load champions.</p>';
-          itemGrid.innerHTML = '<p style="color:red;">Failed to load items.</p>';
+          console.error(error);
+          championGrid.innerHTML = '<p style="color:red;">Failed to load data.</p>';
+          itemGrid.innerHTML = '<p style="color:red;">Failed to load data.</p>';
         }
       }
 
-      // ---------- Render functions ----------
+      function renderAll() {
+        renderChampions();
+        renderItems();
+        renderAugments();
+        updateSelectedItemsBar();
+        updateSelectedAugmentsBar();
+        calculateStats();
+      }
+
+      // ---------- Rendering ----------
       function renderChampions() {
         championGrid.innerHTML = '';
-        const champArray = Object.entries(championsData);
-        if (champArray.length === 0) {
-          championGrid.innerHTML = '<p>No champions found.</p>';
-          return;
-        }
-        champArray.forEach(([key, champ]) => {
+        Object.entries(championsData).forEach(([key, champ]) => {
           const div = document.createElement('div');
           div.className = 'selection-item';
           div.dataset.championKey = key;
           const img = document.createElement('img');
           img.src = `https://ddragon.leagueoflegends.com/cdn/${ddVersion}/img/champion/${key}.png`;
           img.alt = champ.name;
-          img.onerror = () => { img.style.display = 'none'; div.textContent = champ.name.charAt(0); };
+          img.onerror = () => { img.remove(); div.textContent = champ.name.charAt(0); };
           div.appendChild(img);
           if (state.selectedChampion === key) div.classList.add('selected');
           div.addEventListener('click', () => selectChampion(key, div));
@@ -220,76 +170,58 @@
 
       function renderItems() {
         itemGrid.innerHTML = '';
-        const itemArray = Object.entries(itemsData).filter(([id, item]) => {
-          if (!item.gold || !item.gold.total || item.gold.total <= 0) return false;
-          if (item.tags && (item.tags.includes('Trinket') || item.tags.includes('Consumable') || item.tags.includes('GoldPer'))) return false;
-          return true;
-        });
-        if (itemArray.length === 0) {
-          itemGrid.innerHTML = '<p>No items to display.</p>';
-          return;
-        }
-        itemArray.forEach(([id, item]) => {
-          const div = document.createElement('div');
-          div.className = 'selection-item';
-          div.dataset.itemId = id;
-          const img = document.createElement('img');
-          img.src = `https://ddragon.leagueoflegends.com/cdn/${ddVersion}/img/item/${id}.png`;
-          img.alt = item.name;
-          img.onerror = () => { img.style.display = 'none'; div.textContent = item.name.charAt(0); };
-          div.appendChild(img);
-          if (state.selectedItems.has(id)) div.classList.add('selected');
-          div.addEventListener('click', () => toggleItem(id, div));
-          itemGrid.appendChild(div);
-        });
+        Object.entries(itemsData)
+          .filter(([id, item]) => item.gold?.total > 0 && !(item.tags || []).some(t => ['Trinket','Consumable','GoldPer'].includes(t)))
+          .forEach(([id, item]) => {
+            const div = document.createElement('div');
+            div.className = 'selection-item';
+            div.dataset.itemId = id;
+            const img = document.createElement('img');
+            img.src = `https://ddragon.leagueoflegends.com/cdn/${ddVersion}/img/item/${id}.png`;
+            img.alt = item.name;
+            img.onerror = () => { img.remove(); div.textContent = item.name.charAt(0); };
+            div.appendChild(img);
+            if (state.selectedItems.has(id)) div.classList.add('selected');
+            div.addEventListener('click', () => toggleItem(id, div));
+            itemGrid.appendChild(div);
+          });
       }
 
       function renderAugments() {
         augmentGrid.innerHTML = '';
         if (augments.length === 0) {
-          augmentGrid.innerHTML = '<p style="color:orange;">No augment data. Run the scraper to get augments.json.</p>';
+          augmentGrid.innerHTML = '<p style="color:orange;">No augment data.</p>';
           return;
         }
-        augments.forEach((aug, index) => {
+        augments.forEach((aug, idx) => {
           const div = document.createElement('div');
           div.className = 'selection-item';
-          div.dataset.augmentIndex = index;
-
+          div.dataset.augmentIndex = idx;
           if (aug.icon) {
             const img = document.createElement('img');
             img.src = aug.icon;
             img.alt = aug.name;
-            img.onerror = () => { img.remove(); div.textContent = aug.name.charAt(0); div.style.backgroundColor = getColor(index); };
+            img.onerror = () => { img.remove(); div.textContent = aug.name.charAt(0); div.style.backgroundColor = getColor(idx); };
             div.appendChild(img);
           } else {
             div.textContent = aug.name.charAt(0);
-            div.style.backgroundColor = getColor(index);
-            div.style.display = 'flex';
-            div.style.alignItems = 'center';
-            div.style.justifyContent = 'center';
-            div.style.fontSize = '1.2rem';
-            div.style.fontWeight = 'bold';
+            div.style.backgroundColor = getColor(idx);
+            div.style.display = 'flex'; div.style.alignItems = 'center'; div.style.justifyContent = 'center';
+            div.style.fontSize = '1.2rem'; div.style.fontWeight = 'bold';
           }
-
           const tooltip = document.createElement('span');
           tooltip.className = 'tooltip';
           tooltip.textContent = aug.desc;
           div.appendChild(tooltip);
-
-          if (state.selectedAugments.has(index)) div.classList.add('selected');
-          div.addEventListener('click', () => toggleAugment(index, div));
-
-          // Smart tooltip positioning
+          if (state.selectedAugments.has(idx)) div.classList.add('selected');
+          div.addEventListener('click', () => toggleAugment(idx, div));
+          // Smart tooltip
           div.addEventListener('mouseenter', () => {
             const gridRect = augmentGrid.getBoundingClientRect();
             const iconRect = div.getBoundingClientRect();
-            const tooltipWidth = 220;
-            let left = iconRect.left + iconRect.width/2 - tooltipWidth/2;
-            const padding = 4;
-            const minLeft = gridRect.left + padding;
-            const maxLeft = gridRect.right - tooltipWidth - padding;
-            if (left < minLeft) left = minLeft;
-            if (left > maxLeft) left = maxLeft;
+            const tw = 220, pad = 4;
+            let left = iconRect.left + iconRect.width/2 - tw/2;
+            left = Math.min(Math.max(left, gridRect.left + pad), gridRect.right - tw - pad);
             tooltip.style.left = (left - iconRect.left) + 'px';
             tooltip.style.transform = 'none';
           });
@@ -297,223 +229,299 @@
             tooltip.style.left = '50%';
             tooltip.style.transform = 'translateX(-50%)';
           });
-
           augmentGrid.appendChild(div);
         });
       }
 
-      function getColor(index) {
-        return ['#3c5a77','#5e4b3c','#2e5a4b','#6b4e5a','#4a6e5f'][index % 5];
-      }
+      function getColor(i) { return ['#3c5a77','#5e4b3c','#2e5a4b','#6b4e5a','#4a6e5f'][i%5]; }
 
-      // ---------- Hotbar updates (always 6 slots) ----------
+      // ---------- Hotbars ----------
       function updateSelectedItemsBar() {
         selectedItemsBar.innerHTML = '';
-        const selectedArray = Array.from(state.selectedItems);
+        const arr = Array.from(state.selectedItems);
         for (let i = 0; i < MAX_SELECTIONS; i++) {
           const slot = document.createElement('div');
           slot.className = 'hotbar-slot';
-          if (i < selectedArray.length) {
-            // Filled slot
-            const id = selectedArray[i];
+          if (i < arr.length) {
+            const id = arr[i];
             const item = itemsData[id];
             slot.classList.add('filled');
             const img = document.createElement('img');
             img.src = `https://ddragon.leagueoflegends.com/cdn/${ddVersion}/img/item/${id}.png`;
-            img.alt = item ? item.name : '';
             slot.appendChild(img);
-
-            // Remove X button
-            const removeBtn = document.createElement('span');
-            removeBtn.className = 'remove-x';
-            removeBtn.textContent = '×';
-            removeBtn.addEventListener('click', (e) => {
-              e.stopPropagation();
-              state.selectedItems.delete(id);
-              updateSelectedItemsBar();
-              const gridItem = document.querySelector(`#itemGrid .selection-item[data-item-id="${id}"]`);
-              if (gridItem) gridItem.classList.remove('selected');
-              calculateStats();
-            });
-            slot.appendChild(removeBtn);
-
-            slot.addEventListener('click', () => {
-              state.selectedItems.delete(id);
-              updateSelectedItemsBar();
-              const gridItem = document.querySelector(`#itemGrid .selection-item[data-item-id="${id}"]`);
-              if (gridItem) gridItem.classList.remove('selected');
-              calculateStats();
-            });
+            const rm = document.createElement('span');
+            rm.className = 'remove-x'; rm.textContent = '×';
+            rm.addEventListener('click', (e) => { e.stopPropagation(); deselectItem(id); });
+            slot.appendChild(rm);
+            slot.addEventListener('click', () => deselectItem(id));
           }
-          // Empty slot remains as dashed border
           selectedItemsBar.appendChild(slot);
         }
       }
 
       function updateSelectedAugmentsBar() {
         selectedAugmentsBar.innerHTML = '';
-        const selectedArray = Array.from(state.selectedAugments);
+        const arr = Array.from(state.selectedAugments);
         for (let i = 0; i < MAX_SELECTIONS; i++) {
           const slot = document.createElement('div');
           slot.className = 'hotbar-slot';
-          if (i < selectedArray.length) {
-            const index = selectedArray[i];
-            const aug = augments[index];
+          if (i < arr.length) {
+            const idx = arr[i];
+            const aug = augments[idx];
             slot.classList.add('filled');
-            
-            if (aug && aug.icon) {
+            if (aug.icon) {
               const img = document.createElement('img');
               img.src = aug.icon;
-              img.alt = aug.name;
               slot.appendChild(img);
-            } else if (aug) {
-              slot.style.backgroundColor = getColor(index);
-              slot.style.display = 'flex';
-              slot.style.alignItems = 'center';
-              slot.style.justifyContent = 'center';
-              slot.style.fontSize = '0.7rem';
-              slot.style.fontWeight = 'bold';
+            } else {
+              slot.style.backgroundColor = getColor(idx);
+              slot.style.display = 'flex'; slot.style.alignItems = 'center'; slot.style.justifyContent = 'center';
+              slot.style.fontSize = '0.7rem'; slot.style.fontWeight = 'bold';
               slot.textContent = aug.name.charAt(0);
             }
-
-            const removeBtn = document.createElement('span');
-            removeBtn.className = 'remove-x';
-            removeBtn.textContent = '×';
-            removeBtn.addEventListener('click', (e) => {
-              e.stopPropagation();
-              state.selectedAugments.delete(index);
-              updateSelectedAugmentsBar();
-              const gridItem = document.querySelector(`#augmentGrid .selection-item[data-augment-index="${index}"]`);
-              if (gridItem) gridItem.classList.remove('selected');
-              calculateStats();
-            });
-            slot.appendChild(removeBtn);
-
-            slot.addEventListener('click', () => {
-              state.selectedAugments.delete(index);
-              updateSelectedAugmentsBar();
-              const gridItem = document.querySelector(`#augmentGrid .selection-item[data-augment-index="${index}"]`);
-              if (gridItem) gridItem.classList.remove('selected');
-              calculateStats();
-            });
+            const rm = document.createElement('span');
+            rm.className = 'remove-x'; rm.textContent = '×';
+            rm.addEventListener('click', (e) => { e.stopPropagation(); deselectAugment(idx); });
+            slot.appendChild(rm);
+            slot.addEventListener('click', () => deselectAugment(idx));
           }
           selectedAugmentsBar.appendChild(slot);
         }
       }
 
-      // ---------- Selection handlers ----------
-      function selectChampion(key, element) {
-        document.querySelectorAll('#championGrid .selection-item.selected').forEach(el => el.classList.remove('selected'));
+      // ---------- Selection ----------
+      function selectChampion(key, el) {
+        document.querySelectorAll('#championGrid .selection-item.selected').forEach(e => e.classList.remove('selected'));
         state.selectedChampion = key;
-        element.classList.add('selected');
+        el.classList.add('selected');
         calculateStats();
       }
 
-      function toggleItem(id, element) {
+      function toggleItem(id, el) {
         if (state.selectedItems.has(id)) {
           state.selectedItems.delete(id);
-          element.classList.remove('selected');
+          el.classList.remove('selected');
         } else {
-          // Silently ignore if already at max
           if (state.selectedItems.size >= MAX_SELECTIONS) return;
           state.selectedItems.add(id);
-          element.classList.add('selected');
+          el.classList.add('selected');
         }
         updateSelectedItemsBar();
         calculateStats();
       }
 
-      function toggleAugment(index, element) {
-        if (state.selectedAugments.has(index)) {
-          state.selectedAugments.delete(index);
-          element.classList.remove('selected');
+      function toggleAugment(idx, el) {
+        if (state.selectedAugments.has(idx)) {
+          state.selectedAugments.delete(idx);
+          el.classList.remove('selected');
         } else {
           if (state.selectedAugments.size >= MAX_SELECTIONS) return;
-          state.selectedAugments.add(index);
-          element.classList.add('selected');
+          state.selectedAugments.add(idx);
+          el.classList.add('selected');
         }
         updateSelectedAugmentsBar();
         calculateStats();
       }
 
-      // ---------- Level input ----------
-      levelInput.addEventListener('input', () => {
-        state.level = parseInt(levelInput.value) || 1;
+      function deselectItem(id) {
+        state.selectedItems.delete(id);
+        updateSelectedItemsBar();
+        const el = document.querySelector(`#itemGrid .selection-item[data-item-id="${id}"]`);
+        if (el) el.classList.remove('selected');
         calculateStats();
-      });
+      }
 
-      // ---------- Search filtering ----------
+      function deselectAugment(idx) {
+        state.selectedAugments.delete(idx);
+        updateSelectedAugmentsBar();
+        const el = document.querySelector(`#augmentGrid .selection-item[data-augment-index="${idx}"]`);
+        if (el) el.classList.remove('selected');
+        calculateStats();
+      }
+
+      // ---------- Search ----------
       championSearch.addEventListener('input', () => {
         const q = championSearch.value.toLowerCase();
         document.querySelectorAll('#championGrid .selection-item').forEach(el => {
-          const key = el.dataset.championKey;
-          const champ = championsData[key];
-          el.style.display = champ && champ.name.toLowerCase().includes(q) ? '' : 'none';
+          const k = el.dataset.championKey;
+          el.style.display = championsData[k]?.name.toLowerCase().includes(q) ? '' : 'none';
         });
       });
       itemSearch.addEventListener('input', () => {
         const q = itemSearch.value.toLowerCase();
         document.querySelectorAll('#itemGrid .selection-item').forEach(el => {
           const id = el.dataset.itemId;
-          const item = itemsData[id];
-          el.style.display = item && item.name.toLowerCase().includes(q) ? '' : 'none';
+          el.style.display = itemsData[id]?.name.toLowerCase().includes(q) ? '' : 'none';
         });
       });
       augmentSearch.addEventListener('input', () => {
         const q = augmentSearch.value.toLowerCase();
         document.querySelectorAll('#augmentGrid .selection-item').forEach(el => {
           const idx = parseInt(el.dataset.augmentIndex);
-          const aug = augments[idx];
-          el.style.display = aug && aug.name.toLowerCase().includes(q) ? '' : 'none';
+          el.style.display = augments[idx]?.name.toLowerCase().includes(q) ? '' : 'none';
         });
       });
 
-      // ---------- Stat calculation ----------
-      function getStat(champData, lvl, baseKey, growthKey) {
-        const g = lvl - 1;
-        return champData.stats[baseKey] + champData.stats[growthKey] * g * (0.7025 + 0.0175 * g);
+      levelInput.addEventListener('input', () => { state.level = parseInt(levelInput.value) || 1; calculateStats(); });
+
+      // ---------- Full stat calculation ----------
+      function getBaseStat(champ, level, baseKey, growthKey) {
+        const g = level - 1;
+        return champ.stats[baseKey] + champ.stats[growthKey] * g * (0.7025 + 0.0175 * g);
       }
+
       function calculateStats() {
         if (!state.selectedChampion || !championsData[state.selectedChampion]) {
           statsTable.innerHTML = '<tr><td colspan="2">Select a champion</td></tr>';
           return;
         }
         const champ = championsData[state.selectedChampion];
-        const lvl = state.level;
+        const level = state.level;
+
+        // Base stats (AD, HP, Mana, Armor, MR, AP=0)
         const base = {
-          health: getStat(champ, lvl, 'hp', 'hpperlevel'),
-          mana: getStat(champ, lvl, 'mp', 'mpperlevel'),
-          armor: getStat(champ, lvl, 'armor', 'armorperlevel'),
-          magicResistance: getStat(champ, lvl, 'spellblock', 'spellblockperlevel'),
-          attackDamage: getStat(champ, lvl, 'attackdamage', 'attackdamageperlevel'),
+          health: getBaseStat(champ, level, 'hp', 'hpperlevel'),
+          mana: getBaseStat(champ, level, 'mp', 'mpperlevel'),
+          armor: getBaseStat(champ, level, 'armor', 'armorperlevel'),
+          magicResistance: getBaseStat(champ, level, 'spellblock', 'spellblockperlevel'),
+          attackDamage: getBaseStat(champ, level, 'attackdamage', 'attackdamageperlevel'),
           abilityPower: 0
         };
-        const itemBonuses = { health:0, mana:0, armor:0, magicResistance:0, attackDamage:0, abilityPower:0 };
+
+        // Attack speed components
+        const baseAS = champ.stats.attackspeed;
+        const asGrowth = champ.stats.attackspeedperlevel / 100; // percent per level
+        const levelASBonus = asGrowth * (level - 1);
+
+        // ---------- Accumulate all item stats ----------
+        const bonuses = {
+          health: 0, mana: 0, armor: 0, magicResistance: 0,
+          attackDamage: 0, abilityPower: 0,
+          attackSpeedPercent: 0,   // PercentAttackSpeedMod sum (decimal)
+          abilityHaste: 0,
+          critChance: 0,           // FlatCritChanceMod (decimal)
+          lethality: 0,
+          flatMagicPen: 0,
+          percentMagicPen: 0,
+          flatArmorPen: 0,
+          percentArmorPen: 0,
+          healShieldPower: 0,      // HealAndShieldPowerMod (decimal)
+          lifeSteal: 0,            // PercentLifeStealMod (decimal)
+          spellVamp: 0,            // PercentSpellVampMod
+          moveSpeedFlat: 0,
+          moveSpeedPercent: 0,
+          attackRange: 0,
+          adaptiveForce: 0
+        };
+
+        // Item stat key mapping (DDragon key → our bonus field)
+        const itemStatMap = {
+          FlatHPPoolMod: 'health',
+          FlatMPPoolMod: 'mana',
+          FlatArmorMod: 'armor',
+          FlatSpellBlockMod: 'magicResistance',
+          FlatPhysicalDamageMod: 'attackDamage',
+          FlatMagicDamageMod: 'abilityPower',
+          PercentAttackSpeedMod: 'attackSpeedPercent',
+          AbilityHasteMod: 'abilityHaste',
+          FlatCritChanceMod: 'critChance',
+          LethalityMod: 'lethality',
+          FlatMagicPenetrationMod: 'flatMagicPen',
+          PercentMagicPenetrationMod: 'percentMagicPen',
+          FlatArmorPenetrationMod: 'flatArmorPen',
+          PercentArmorPenetrationMod: 'percentArmorPen',
+          HealAndShieldPowerMod: 'healShieldPower',
+          PercentLifeStealMod: 'lifeSteal',
+          PercentSpellVampMod: 'spellVamp',
+          FlatMovementSpeedMod: 'moveSpeedFlat',
+          PercentMovementSpeedMod: 'moveSpeedPercent',
+          AttackRangeMod: 'attackRange'
+        };
+
         state.selectedItems.forEach(id => {
           const item = itemsData[id];
           if (!item?.stats) return;
-          const map = { FlatHPPoolMod:'health', FlatMPPoolMod:'mana', FlatArmorMod:'armor', FlatSpellBlockMod:'magicResistance', FlatPhysicalDamageMod:'attackDamage', FlatMagicDamageMod:'abilityPower' };
-          for (const [sk, val] of Object.entries(item.stats)) if (map[sk]) itemBonuses[map[sk]] += val;
+          for (const [key, val] of Object.entries(item.stats)) {
+            if (itemStatMap[key]) {
+              bonuses[itemStatMap[key]] += val;
+            }
+          }
         });
+
+        // Augments (only original six + adaptive for now)
         const augBonuses = { health:0, mana:0, armor:0, magicResistance:0, attackDamage:0, abilityPower:0, adaptiveForce:0 };
         state.selectedAugments.forEach(idx => {
           const aug = augments[idx];
-          if (aug?.effects) for (const [k,v] of Object.entries(aug.effects)) if (augBonuses.hasOwnProperty(k)) augBonuses[k] += v;
+          if (aug?.effects) {
+            for (const [k,v] of Object.entries(aug.effects)) {
+              if (augBonuses.hasOwnProperty(k)) augBonuses[k] += v;
+            }
+          }
         });
-        let ad = itemBonuses.attackDamage + augBonuses.attackDamage;
-        let ap = itemBonuses.abilityPower + augBonuses.abilityPower;
-        const adapt = augBonuses.adaptiveForce;
-        if (ad > ap) ad += adapt; else ap += adapt;
 
-        const totals = {
-          'Health': Math.round(base.health + itemBonuses.health + augBonuses.health),
-          'Mana': Math.round(base.mana + itemBonuses.mana + augBonuses.mana),
-          'Armor': Math.round(base.armor + itemBonuses.armor + augBonuses.armor),
-          'Magic Resist': Math.round(base.magicResistance + itemBonuses.magicResistance + augBonuses.magicResistance),
-          'Attack Damage': Math.round(base.attackDamage + ad),
-          'Ability Power': Math.round(base.abilityPower + ap)
+        // Merge augments into bonuses for the six stats
+        bonuses.health += augBonuses.health;
+        bonuses.mana += augBonuses.mana;
+        bonuses.armor += augBonuses.armor;
+        bonuses.magicResistance += augBonuses.magicResistance;
+        bonuses.attackDamage += augBonuses.attackDamage;
+        bonuses.abilityPower += augBonuses.abilityPower;
+        const adaptive = augBonuses.adaptiveForce;
+
+        // Adaptive force assignment
+        let adBonus = bonuses.attackDamage;
+        let apBonus = bonuses.abilityPower;
+        if (adBonus > apBonus) adBonus += adaptive;
+        else apBonus += adaptive;
+
+        // Total attack speed
+        const totalAS = baseAS * (1 + levelASBonus + bonuses.attackSpeedPercent);
+
+        // Build display rows
+        const rows = [];
+
+        // Helper to add row: if value is 0, skip unless it's a core stat we always show
+        const addRow = (label, value, alwaysShow = false) => {
+          if (!alwaysShow && value === 0) return;
+          let display = value;
+          if (typeof value === 'number') {
+            // Format
+            if (label.includes('%') || label.includes('Percent') || label.includes('Chance') || label.includes('Steal') || label.includes('Vamp') || label.includes('Heal') || label.includes('Power')) {
+              display = (value * 100).toFixed(1) + '%';
+            } else if (label === 'Attack Speed') {
+              display = value.toFixed(3);
+            } else {
+              display = Math.round(value);
+            }
+          }
+          rows.push(`<tr><td>${label}</td><td>${display}</td></tr>`);
         };
-        statsTable.innerHTML = Object.entries(totals).map(([n,v]) => `<tr><td>${n}</td><td>${v}</td></tr>`).join('');
+
+        // Core stats always shown
+        addRow('Health', base.health + bonuses.health, true);
+        addRow('Mana', base.mana + bonuses.mana, true);
+        addRow('Armor', base.armor + bonuses.armor, true);
+        addRow('Magic Resist', base.magicResistance + bonuses.magicResistance, true);
+        addRow('Attack Damage', base.attackDamage + adBonus, true);
+        addRow('Ability Power', base.abilityPower + apBonus, true);
+        addRow('Attack Speed', totalAS, true);
+
+        // Other stats (show if non-zero)
+        addRow('Ability Haste', bonuses.abilityHaste);
+        addRow('Crit Chance', bonuses.critChance);
+        addRow('Lethality', bonuses.lethality);
+        addRow('Flat Magic Pen', bonuses.flatMagicPen);
+        addRow('% Magic Pen', bonuses.percentMagicPen);
+        addRow('Flat Armor Pen', bonuses.flatArmorPen);
+        addRow('% Armor Pen', bonuses.percentArmorPen);
+        addRow('Heal/Shield Power', bonuses.healShieldPower);
+        addRow('Life Steal', bonuses.lifeSteal);
+        addRow('Spell Vamp', bonuses.spellVamp);
+        addRow('Move Speed (flat)', bonuses.moveSpeedFlat);
+        addRow('Move Speed (%)', bonuses.moveSpeedPercent);
+        addRow('Attack Range', bonuses.attackRange);
+
+        statsTable.innerHTML = rows.join('');
       }
 
       // Start
