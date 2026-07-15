@@ -174,57 +174,81 @@
         }
       }
 
-      function renderAugments() {
-        augmentGrid.innerHTML = '';
-        augments.forEach((aug, index) => {
-          const div = document.createElement('div');
-          div.className = 'selection-item';
-          div.dataset.augmentIndex = index;
+function renderAugments() {
+  augmentGrid.innerHTML = '';
+  augments.forEach((aug, index) => {
+    const div = document.createElement('div');
+    div.className = 'selection-item';
+    div.dataset.augmentIndex = index;
 
-          // Icon
-          if (aug.icon) {
-            const img = document.createElement('img');
-            img.src = aug.icon;
-            img.alt = aug.name;
-            img.onerror = () => {
-              // Fallback to placeholder if image can't load
-              div.style.backgroundColor = getColorForAugment(index);
-              div.style.display = 'flex';
-              div.style.alignItems = 'center';
-              div.style.justifyContent = 'center';
-              div.style.fontSize = '1.2rem';
-              div.style.fontWeight = 'bold';
-              div.textContent = aug.name.charAt(0);
-              img.remove();
-            };
-            div.appendChild(img);
-          } else {
-            // No icon URL
-            div.style.backgroundColor = getColorForAugment(index);
-            div.style.display = 'flex';
-            div.style.alignItems = 'center';
-            div.style.justifyContent = 'center';
-            div.style.fontSize = '1.2rem';
-            div.style.fontWeight = 'bold';
-            div.textContent = aug.name.charAt(0);
-          }
+    // Icon
+    if (aug.icon) {
+      const img = document.createElement('img');
+      img.src = aug.icon;
+      img.alt = aug.name;
+      img.onerror = () => {
+        div.style.backgroundColor = getColorForAugment(index);
+        div.style.display = 'flex';
+        div.style.alignItems = 'center';
+        div.style.justifyContent = 'center';
+        div.style.fontSize = '1.2rem';
+        div.style.fontWeight = 'bold';
+        div.textContent = aug.name.charAt(0);
+        img.remove();
+      };
+      div.appendChild(img);
+    } else {
+      div.style.backgroundColor = getColorForAugment(index);
+      div.style.display = 'flex';
+      div.style.alignItems = 'center';
+      div.style.justifyContent = 'center';
+      div.style.fontSize = '1.2rem';
+      div.style.fontWeight = 'bold';
+      div.textContent = aug.name.charAt(0);
+    }
 
-          // Tooltip
-          const tooltip = document.createElement('span');
-          tooltip.className = 'tooltip';
-          tooltip.textContent = aug.desc;
-          div.appendChild(tooltip);
+    // Tooltip
+    const tooltip = document.createElement('span');
+    tooltip.className = 'tooltip';
+    tooltip.textContent = aug.desc;
+    div.appendChild(tooltip);
 
-          if (state.selectedAugments.has(index)) div.classList.add('selected');
-          div.addEventListener('click', () => toggleAugment(index, div));
-          augmentGrid.appendChild(div);
-        });
-      }
+    if (state.selectedAugments.has(index)) div.classList.add('selected');
 
-      function getColorForAugment(index) {
-        const colors = ['#3c5a77', '#5e4b3c', '#2e5a4b', '#6b4e5a', '#4a6e5f'];
-        return colors[index % colors.length];
-      }
+    // Click to select
+    div.addEventListener('click', () => toggleAugment(index, div));
+
+    // ---------- Smart tooltip positioning ----------
+    div.addEventListener('mouseenter', () => {
+      const gridRect = augmentGrid.getBoundingClientRect();
+      const iconRect = div.getBoundingClientRect();
+      const tooltipWidth = 220;  // matches the CSS width
+
+      // Default: center the tooltip above the icon
+      let left = iconRect.left + iconRect.width / 2 - tooltipWidth / 2;
+
+      // Clamp to grid boundaries (with a small padding)
+      const padding = 4;
+      const minLeft = gridRect.left + padding;
+      const maxLeft = gridRect.right - tooltipWidth - padding;
+
+      if (left < minLeft) left = minLeft;
+      if (left > maxLeft) left = maxLeft;
+
+      // Convert to a value relative to the icon
+      tooltip.style.left = (left - iconRect.left) + 'px';
+      tooltip.style.transform = 'none';  // disable the default translateX(-50%)
+    });
+
+    div.addEventListener('mouseleave', () => {
+      // Reset to default centering
+      tooltip.style.left = '50%';
+      tooltip.style.transform = 'translateX(-50%)';
+    });
+
+    augmentGrid.appendChild(div);
+  });
+}
 
       // ---------- Search filtering ----------
       championSearch.addEventListener('input', () => {

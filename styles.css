@@ -10,20 +10,19 @@ body {
   background: #0a0e14;
   color: #e0e0e0;
   height: 100vh;
-  overflow: hidden; /* prevent scrollbars if the grid fits the viewport */
+  overflow: hidden;
 }
 
 /* ---------- Main Grid Layout ---------- */
 .main-grid {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  grid-template-rows: 1fr auto; /* top sections share equal height, bottom auto */
+  grid-template-rows: 1fr auto;
   height: 100vh;
   gap: 8px;
   padding: 8px;
 }
 
-/* Top three panels */
 .section {
   background: #1a1e26;
   border-radius: 12px;
@@ -44,7 +43,6 @@ body {
   padding-bottom: 4px;
 }
 
-/* Assign areas */
 .champion-section {
   grid-column: 1 / 2;
   grid-row: 1 / 2;
@@ -61,19 +59,19 @@ body {
 }
 
 .stats-section {
-  grid-column: 1 / -1;  /* full width */
+  grid-column: 1 / -1;
   grid-row: 2 / 3;
   background: #1a1e26;
   border-radius: 12px;
   padding: 16px;
 }
 
-/* ---------- Icon Selection Grid (champions, items, augments) ---------- */
+/* ---------- Icon Selection Grid ---------- */
 .selection-grid {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  overflow-y: auto;       /* scrollable if many icons */
+  overflow-y: auto;
   align-content: flex-start;
   flex: 1;
 }
@@ -85,14 +83,13 @@ body {
   border-radius: 6px;
   cursor: pointer;
   transition: border-color 0.2s, background 0.2s;
-  position: relative;
+  position: relative;              /* needed for tooltip positioning */
 }
 
 .selection-item:hover {
   border-color: #c8aa6e;
 }
 
-/* Selected state */
 .selection-item.selected {
   border-color: #f0e6d2;
   background: rgba(200, 170, 110, 0.25);
@@ -105,7 +102,7 @@ body {
   border-radius: 4px;
 }
 
-/* Tooltip for augments (shown on hover) */
+/* ---------- Tooltip ---------- */
 .selection-item .tooltip {
   display: none;
   position: absolute;
@@ -117,9 +114,8 @@ body {
   padding: 8px 10px;
   border-radius: 6px;
   font-size: 0.75rem;
-  white-space: normal;          /* allow text to wrap */
-  max-width: 220px;             /* keep it compact */
-  width: max-content;           /* expand to fit, but not exceed max-width */
+  white-space: normal;            /* allows text to wrap */
+  width: 220px;                   /* fixed width for easy JS calculation */
   word-wrap: break-word;
   z-index: 100;
   pointer-events: none;
