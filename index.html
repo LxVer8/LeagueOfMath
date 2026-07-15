@@ -25,33 +25,13 @@
     .search-input::placeholder { color: #888; }
     .search-input:focus { border-color: #c8aa6e; }
 
-    /* Stats table */
-    .stats-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 8px;
-      font-size: 1.1rem;
-    }
-    .stats-table td {
-      padding: 6px 8px;
-      border-bottom: 1px solid #2a2e38;
-    }
-    .stats-table td:first-child {
-      font-weight: bold;
-      color: #c8aa6e;
-    }
-    .stats-table td:last-child {
-      text-align: right;
-    }
+    .stats-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 1.1rem; }
+    .stats-table td { padding: 6px 8px; border-bottom: 1px solid #2a2e38; }
+    .stats-table td:first-child { font-weight: bold; color: #c8aa6e; }
+    .stats-table td:last-child { text-align: right; color: #ffffff; }
+    .stats-table td:last-child.modified { color: #f0e68c; }
 
-    /* Small icon next to stat name */
-    .stat-icon {
-      width: 18px;
-      height: 18px;
-      vertical-align: middle;
-      margin-right: 4px;
-    }
-
+    .stat-icon { width: 20px; height: 20px; vertical-align: middle; margin-right: 4px; }
     .level-input-container { display: flex; align-items: center; justify-content: center; margin: 6px 0; }
     .level-input-container input { width: 55px; padding: 4px; background: #2a2e38; border: 1px solid #444; border-radius: 4px; color: #e0e0e0; text-align: center; }
     .selection-grid::-webkit-scrollbar, .stats-section::-webkit-scrollbar { width: 6px; }
@@ -68,7 +48,6 @@
 </head>
 <body>
   <div class="main-grid">
-    <!-- CHAMPIONS -->
     <div class="section champion-section">
       <h2>Pick a Champion</h2>
       <input type="text" class="search-input" id="championSearch" placeholder="Search champions…">
@@ -78,24 +57,18 @@
       </div>
       <div class="selection-grid" id="championGrid"><p style="color:#aaa; text-align:center;">Loading…</p></div>
     </div>
-
-    <!-- ITEMS -->
     <div class="section items-section">
       <h2>Pick Items (max 6)</h2>
       <input type="text" class="search-input" id="itemSearch" placeholder="Search items…">
       <div class="hotbar" id="selectedItemsBar"></div>
       <div class="selection-grid" id="itemGrid"><p style="color:#aaa; text-align:center;">Loading…</p></div>
     </div>
-
-    <!-- AUGMENTS -->
     <div class="section augments-section">
       <h2>Pick Augments (max 6)</h2>
       <input type="text" class="search-input" id="augmentSearch" placeholder="Search augments…">
       <div class="hotbar" id="selectedAugmentsBar"></div>
       <div class="selection-grid" id="augmentGrid"><p style="color:#aaa; text-align:center;">Loading…</p></div>
     </div>
-
-    <!-- STATS -->
     <div class="section stats-section">
       <h2>Full Stats</h2>
       <table class="stats-table" id="statsTable"><tr><td colspan="2">Select a champion</td></tr></table>
@@ -119,62 +92,32 @@
       const itemSearch = document.getElementById('itemSearch');
       const augmentSearch = document.getElementById('augmentSearch');
 
-      // ---------- Stat icon mapping (wiki URLs) ----------
       const statIcons = {
         'Health': 'https://wiki.leagueoflegends.com/en-us/images/Health_icon.png',
         'Mana': 'https://wiki.leagueoflegends.com/en-us/images/Mana_icon.png',
-        'Health Regen (per 5s)': 'https://wiki.leagueoflegends.com/en-us/images/Health_regeneration_icon.png',
-        'Mana Regen (per 5s)': 'https://wiki.leagueoflegends.com/en-us/images/Mana_regeneration_icon.png',
+        'Health Regen': 'https://wiki.leagueoflegends.com/en-us/images/Health_regeneration_icon.png',
+        'Mana Regen': 'https://wiki.leagueoflegends.com/en-us/images/Mana_regeneration_icon.png',
         'Armor': 'https://wiki.leagueoflegends.com/en-us/images/Armor_icon.png',
         'Magic Resist': 'https://wiki.leagueoflegends.com/en-us/images/Magic_resistance_icon.png',
         'Attack Damage': 'https://wiki.leagueoflegends.com/en-us/images/Attack_damage_icon.png',
         'Ability Power': 'https://wiki.leagueoflegends.com/en-us/images/Ability_power_icon.svg?c0f6c',
         'Attack Speed': 'https://wiki.leagueoflegends.com/en-us/images/Attack_speed_icon.png',
-        'Ability Haste': 'https://wiki.leagueoflegends.com/en-us/images/Ability_haste_icon.png',
+        'Ability Haste': 'https://wiki.leagueoflegends.com/en-us/images/thumb/Cooldown_reduction_icon.png/15px-Cooldown_reduction_icon.png?27276',
         'Crit Chance': 'https://wiki.leagueoflegends.com/en-us/images/Critical_strike_chance_icon.png',
         'Lethality': 'https://wiki.leagueoflegends.com/en-us/images/Armor_penetration_icon.png',
         'Flat Magic Pen': 'https://wiki.leagueoflegends.com/en-us/images/Magic_penetration_icon.png',
         '% Magic Pen': 'https://wiki.leagueoflegends.com/en-us/images/Magic_penetration_icon.png',
         'Flat Armor Pen': 'https://wiki.leagueoflegends.com/en-us/images/Armor_penetration_icon.png',
         '% Armor Pen': 'https://wiki.leagueoflegends.com/en-us/images/Armor_penetration_icon.png',
-        'Heal / Shield Power': 'https://wiki.leagueoflegends.com/en-us/images/Heal_and_shield_power_icon.png',
+        'Heal & Shield Power': 'https://wiki.leagueoflegends.com/en-us/images/Heal_and_shield_power_icon.png',
         'Life Steal': 'https://wiki.leagueoflegends.com/en-us/images/Life_steal_icon.png',
         'Spell Vamp': 'https://wiki.leagueoflegends.com/en-us/images/Spell_vamp_icon.png',
         'Omnivamp': 'https://wiki.leagueoflegends.com/en-us/images/Omnivamp_icon.png',
         'Move Speed': 'https://wiki.leagueoflegends.com/en-us/images/Movement_speed_icon.png',
-        'Move Speed %': 'https://wiki.leagueoflegends.com/en-us/images/Movement_speed_icon.png',
+        '% Move Speed': 'https://wiki.leagueoflegends.com/en-us/images/Movement_speed_icon.png',
         'Attack Range': 'https://wiki.leagueoflegends.com/en-us/images/thumb/Range_icon.png/15px-Range_icon.png?ae16f',
         'Tenacity': 'https://wiki.leagueoflegends.com/en-us/images/Tenacity_icon.png',
         'Slow Resist': 'https://wiki.leagueoflegends.com/en-us/images/thumb/Slow_immune_icon.png/15px-Slow_immune_icon.png?4ad41'
-      };
-
-      // Fallback emojis (if image fails)
-      const fallbackEmojis = {
-        'Health': '❤️',
-        'Mana': '💧',
-        'Health Regen (per 5s)': '💚',
-        'Mana Regen (per 5s)': '💙',
-        'Armor': '🛡️',
-        'Magic Resist': '✨',
-        'Attack Damage': '⚔️',
-        'Ability Power': '📖',
-        'Attack Speed': '⏱️',
-        'Ability Haste': '⏳',
-        'Crit Chance': '🎯',
-        'Lethality': '🗡️',
-        'Flat Magic Pen': '🔮',
-        '% Magic Pen': '🔮%',
-        'Flat Armor Pen': '🛡️⬇️',
-        '% Armor Pen': '🛡️%',
-        'Heal / Shield Power': '💖',
-        'Life Steal': '🩸',
-        'Spell Vamp': '🩸✨',
-        'Omnivamp': '🔄',
-        'Move Speed': '👟',
-        'Move Speed %': '👟%',
-        'Attack Range': '📏',
-        'Tenacity': '🔗',
-        'Slow Resist': '🐢'
       };
 
       async function loadData() {
@@ -443,6 +386,7 @@
           adaptiveForce: 0
         };
 
+        // ✅ CORRECTED MAPPING – uses exact Data Dragon keys
         const itemStatMap = {
           FlatHPPoolMod: 'health',
           FlatMPPoolMod: 'mana',
@@ -453,29 +397,31 @@
           FlatHPRegenMod: 'healthRegenFlat',
           FlatMPRegenMod: 'manaRegenFlat',
           PercentAttackSpeedMod: 'attackSpeedPercent',
-          AbilityHasteMod: 'abilityHaste',
-          FlatCritChanceMod: 'critChance',
-          LethalityMod: 'lethality',
-          FlatMagicPenetrationMod: 'flatMagicPen',
-          PercentMagicPenetrationMod: 'percentMagicPen',
-          FlatArmorPenetrationMod: 'flatArmorPen',
-          PercentArmorPenetrationMod: 'percentArmorPen',
-          HealAndShieldPowerMod: 'healShieldPower',
+          AbilityHaste: 'abilityHaste',                // fixed
+          CritChance: 'critChance',                    // fixed
+          Lethality: 'lethality',                      // fixed
+          FlatMagicPenetration: 'flatMagicPen',        // fixed
+          PercentMagicPenetration: 'percentMagicPen',  // fixed
+          FlatArmorPenetration: 'flatArmorPen',
+          PercentArmorPenetration: 'percentArmorPen',
+          HealAndShieldPower: 'healShieldPower',
           PercentLifeStealMod: 'lifeSteal',
-          PercentSpellVampMod: 'spellVamp',
-          PercentOmnivampMod: 'omnivamp',
+          SpellVamp: 'spellVamp',
+          Omnivamp: 'omnivamp',
           FlatMovementSpeedMod: 'moveSpeedFlat',
           PercentMovementSpeedMod: 'moveSpeedPercent',
-          AttackRangeMod: 'attackRange',
-          PercentTenacityMod: 'tenacity',
-          PercentSlowResistMod: 'slowResist'
+          AttackRange: 'attackRange',
+          Tenacity: 'tenacity',
+          SlowResist: 'slowResist'
         };
 
         state.selectedItems.forEach(id => {
           const item = itemsData[id];
           if (!item?.stats) return;
           for (const [key, val] of Object.entries(item.stats)) {
-            if (itemStatMap[key]) bonuses[itemStatMap[key]] += val;
+            if (itemStatMap[key]) {
+              bonuses[itemStatMap[key]] += val;
+            }
           }
         });
 
@@ -501,17 +447,74 @@
         if (adBonus > apBonus) adBonus += adaptive;
         else apBonus += adaptive;
 
-        const totalAS = base.attackSpeed * (1 + base.attackSpeedPerLevel * (level - 1) + bonuses.attackSpeedPercent);
-        const totalHP5 = (base.healthRegen + bonuses.healthRegenFlat) * 5;
-        const totalMP5 = (base.manaRegen + bonuses.manaRegenFlat) * 5;
-        const baseMoveSpeed = champ.stats.movespeed;
-        const totalMoveSpeed = baseMoveSpeed + bonuses.moveSpeedFlat;
-        const totalMoveSpeedPercent = bonuses.moveSpeedPercent;
+        const final = {
+          health: base.health + bonuses.health,
+          mana: base.mana + bonuses.mana,
+          healthRegen5: (base.healthRegen + bonuses.healthRegenFlat) * 5,
+          manaRegen5: (base.manaRegen + bonuses.manaRegenFlat) * 5,
+          armor: base.armor + bonuses.armor,
+          magicResistance: base.magicResistance + bonuses.magicResistance,
+          attackDamage: base.attackDamage + adBonus,
+          abilityPower: base.abilityPower + apBonus,
+          attackSpeed: base.attackSpeed * (1 + base.attackSpeedPerLevel * (level - 1) + bonuses.attackSpeedPercent),
+          abilityHaste: bonuses.abilityHaste,
+          critChance: bonuses.critChance,
+          lethality: bonuses.lethality,
+          flatMagicPen: bonuses.flatMagicPen,
+          percentMagicPen: bonuses.percentMagicPen,
+          flatArmorPen: bonuses.flatArmorPen,
+          percentArmorPen: bonuses.percentArmorPen,
+          healShieldPower: bonuses.healShieldPower,
+          lifeSteal: bonuses.lifeSteal,
+          spellVamp: bonuses.spellVamp,
+          omnivamp: bonuses.omnivamp,
+          moveSpeed: champ.stats.movespeed + bonuses.moveSpeedFlat,
+          moveSpeedPercent: bonuses.moveSpeedPercent,
+          attackRange: bonuses.attackRange,
+          tenacity: bonuses.tenacity,
+          slowResist: bonuses.slowResist
+        };
+
+        const isModified = (label) => {
+          switch (label) {
+            case 'Health': return final.health !== base.health;
+            case 'Mana': return final.mana !== base.mana;
+            case 'Health Regen': return final.healthRegen5 !== base.healthRegen * 5;
+            case 'Mana Regen': return final.manaRegen5 !== base.manaRegen * 5;
+            case 'Armor': return final.armor !== base.armor;
+            case 'Magic Resist': return final.magicResistance !== base.magicResistance;
+            case 'Attack Damage': return final.attackDamage !== base.attackDamage;
+            case 'Ability Power': return final.abilityPower !== 0;
+            case 'Attack Speed':
+              const baseAS = base.attackSpeed * (1 + base.attackSpeedPerLevel * (level - 1));
+              return final.attackSpeed !== baseAS;
+            case 'Ability Haste': return final.abilityHaste !== 0;
+            case 'Crit Chance': return final.critChance !== 0;
+            case 'Lethality': return final.lethality !== 0;
+            case 'Flat Magic Pen': return final.flatMagicPen !== 0;
+            case '% Magic Pen': return final.percentMagicPen !== 0;
+            case 'Flat Armor Pen': return final.flatArmorPen !== 0;
+            case '% Armor Pen': return final.percentArmorPen !== 0;
+            case 'Heal & Shield Power': return final.healShieldPower !== 0;
+            case 'Life Steal': return final.lifeSteal !== 0;
+            case 'Spell Vamp': return final.spellVamp !== 0;
+            case 'Omnivamp': return final.omnivamp !== 0;
+            case 'Move Speed': return final.moveSpeed !== champ.stats.movespeed;
+            case '% Move Speed': return final.moveSpeedPercent !== 0;
+            case 'Attack Range': return final.attackRange !== 0;
+            case 'Tenacity': return final.tenacity !== 0;
+            case 'Slow Resist': return final.slowResist !== 0;
+            default: return false;
+          }
+        };
 
         const rows = [];
-        function addRow(label, value, formatter) {
+        function addRow(label, value, formatter, modified) {
           const iconUrl = statIcons[label] || '';
-          const fallbackEmoji = fallbackEmojis[label] || '';
+          const iconHTML = iconUrl
+            ? `<img class="stat-icon" src="${iconUrl}" alt="${label}" onerror="this.style.display='none';">`
+            : '';
+
           let display;
           if (formatter === 'percent') display = (value * 100).toFixed(1) + '%';
           else if (formatter === 'as') display = value.toFixed(3);
@@ -519,42 +522,35 @@
           else if (formatter === 'flat') display = Math.round(value);
           else display = value;
 
-          // Build the icon cell with image + fallback
-          let iconHTML = '';
-          if (iconUrl) {
-            iconHTML = `<img class="stat-icon" src="${iconUrl}" alt="${label}" onerror="this.style.display='none'; this.nextSibling.style.display='inline';">` +
-                       `<span style="display:none;">${fallbackEmoji}</span>`;
-          } else {
-            iconHTML = fallbackEmoji ? fallbackEmoji + ' ' : '';
-          }
-          rows.push(`<tr><td>${iconHTML} ${label}</td><td>${display}</td></tr>`);
+          const modClass = modified ? ' class="modified"' : '';
+          rows.push(`<tr><td>${iconHTML} ${label}</td><td${modClass}>${display}</td></tr>`);
         }
 
-        addRow('Health', base.health + bonuses.health, 'integer');
-        addRow('Mana', base.mana + bonuses.mana, 'integer');
-        addRow('Health Regen (per 5s)', totalHP5, 'integer');
-        addRow('Mana Regen (per 5s)', totalMP5, 'integer');
-        addRow('Armor', base.armor + bonuses.armor, 'integer');
-        addRow('Magic Resist', base.magicResistance + bonuses.magicResistance, 'integer');
-        addRow('Attack Damage', base.attackDamage + adBonus, 'integer');
-        addRow('Ability Power', base.abilityPower + apBonus, 'integer');
-        addRow('Attack Speed', totalAS, 'as');
-        addRow('Ability Haste', bonuses.abilityHaste, 'integer');
-        addRow('Crit Chance', bonuses.critChance, 'percent');
-        addRow('Lethality', bonuses.lethality, 'integer');
-        addRow('Flat Magic Pen', bonuses.flatMagicPen, 'integer');
-        addRow('% Magic Pen', bonuses.percentMagicPen, 'percent');
-        addRow('Flat Armor Pen', bonuses.flatArmorPen, 'integer');
-        addRow('% Armor Pen', bonuses.percentArmorPen, 'percent');
-        addRow('Heal / Shield Power', bonuses.healShieldPower, 'percent');
-        addRow('Life Steal', bonuses.lifeSteal, 'percent');
-        addRow('Spell Vamp', bonuses.spellVamp, 'percent');
-        addRow('Omnivamp', bonuses.omnivamp, 'percent');
-        addRow('Move Speed', totalMoveSpeed, 'integer');
-        addRow('Move Speed %', totalMoveSpeedPercent, 'percent');
-        addRow('Attack Range', bonuses.attackRange, 'integer');
-        addRow('Tenacity', bonuses.tenacity, 'percent');
-        addRow('Slow Resist', bonuses.slowResist, 'percent');
+        addRow('Health', final.health, 'integer', isModified('Health'));
+        addRow('Mana', final.mana, 'integer', isModified('Mana'));
+        addRow('Health Regen', final.healthRegen5, 'integer', isModified('Health Regen'));
+        addRow('Mana Regen', final.manaRegen5, 'integer', isModified('Mana Regen'));
+        addRow('Armor', final.armor, 'integer', isModified('Armor'));
+        addRow('Magic Resist', final.magicResistance, 'integer', isModified('Magic Resist'));
+        addRow('Attack Damage', final.attackDamage, 'integer', isModified('Attack Damage'));
+        addRow('Ability Power', final.abilityPower, 'integer', isModified('Ability Power'));
+        addRow('Attack Speed', final.attackSpeed, 'as', isModified('Attack Speed'));
+        addRow('Ability Haste', final.abilityHaste, 'integer', isModified('Ability Haste'));
+        addRow('Crit Chance', final.critChance, 'percent', isModified('Crit Chance'));
+        addRow('Lethality', final.lethality, 'integer', isModified('Lethality'));
+        addRow('Flat Magic Pen', final.flatMagicPen, 'integer', isModified('Flat Magic Pen'));
+        addRow('% Magic Pen', final.percentMagicPen, 'percent', isModified('% Magic Pen'));
+        addRow('Flat Armor Pen', final.flatArmorPen, 'integer', isModified('Flat Armor Pen'));
+        addRow('% Armor Pen', final.percentArmorPen, 'percent', isModified('% Armor Pen'));
+        addRow('Heal & Shield Power', final.healShieldPower, 'percent', isModified('Heal & Shield Power'));
+        addRow('Life Steal', final.lifeSteal, 'percent', isModified('Life Steal'));
+        addRow('Spell Vamp', final.spellVamp, 'percent', isModified('Spell Vamp'));
+        addRow('Omnivamp', final.omnivamp, 'percent', isModified('Omnivamp'));
+        addRow('Move Speed', final.moveSpeed, 'integer', isModified('Move Speed'));
+        addRow('% Move Speed', final.moveSpeedPercent, 'percent', isModified('% Move Speed'));
+        addRow('Attack Range', final.attackRange, 'integer', isModified('Attack Range'));
+        addRow('Tenacity', final.tenacity, 'percent', isModified('Tenacity'));
+        addRow('Slow Resist', final.slowResist, 'percent', isModified('Slow Resist'));
 
         statsTable.innerHTML = rows.join('');
       }
