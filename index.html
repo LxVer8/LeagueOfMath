@@ -38,7 +38,6 @@
       pointer-events: none;
       box-shadow: 0 2px 8px rgba(0,0,0,0.6);
       text-align: left;
-      /* Default above the icon */
       bottom: 110%;
       top: auto;
     }
@@ -126,6 +125,9 @@
     </div>
   </div>
 
+  <!-- External stat calculator -->
+  <script src="statCalculator.js"></script>
+
   <script>
     (function() {
       const state = { selectedChampion: null, selectedItems: new Set(), selectedAugments: new Set(), level: 1 };
@@ -173,7 +175,6 @@
 
       // --- Smart tooltip positioning ---
       function positionTooltip(tooltip, icon, grid) {
-        // Temporarily make visible but hidden to measure
         tooltip.style.display = 'block';
         tooltip.style.visibility = 'hidden';
         const tooltipRect = tooltip.getBoundingClientRect();
@@ -184,7 +185,6 @@
         const tooltipWidth = tooltipRect.width;
         const tooltipHeight = tooltipRect.height;
 
-        // Determine vertical position: default above (bottom = 110%)
         let placeAbove = true;
         const spaceAbove = iconRect.top - gridRect.top;
         if (spaceAbove < tooltipHeight + padding) {
@@ -199,7 +199,6 @@
           tooltip.style.top = '110%';
         }
 
-        // Horizontal clamping
         let left = iconRect.left + iconRect.width / 2 - tooltipWidth / 2;
         const minLeft = gridRect.left + padding;
         const maxLeft = gridRect.right - tooltipWidth - padding;
@@ -454,148 +453,35 @@
       });
       levelInput.addEventListener('input', () => { state.level = parseInt(levelInput.value) || 1; calculateStats(); });
 
-      function getBaseStat(champ, level, baseKey, growthKey) {
-        const g = level - 1;
-        return champ.stats[baseKey] + champ.stats[growthKey] * g * (0.7025 + 0.0175 * g);
-      }
-
+      // --- Stat Calculation (using external module) ---
       function calculateStats() {
         if (!state.selectedChampion || !championsData[state.selectedChampion]) {
           statsTable.innerHTML = '<tr><td colspan="2">Select a champion</td></tr>';
           return;
         }
+
         const champ = championsData[state.selectedChampion];
         const level = state.level;
 
-        const base = {
-          health: getBaseStat(champ, level, 'hp', 'hpperlevel'),
-          mana: getBaseStat(champ, level, 'mp', 'mpperlevel'),
-          armor: getBaseStat(champ, level, 'armor', 'armorperlevel'),
-          magicResistance: getBaseStat(champ, level, 'spellblock', 'spellblockperlevel'),
-          attackDamage: getBaseStat(champ, level, 'attackdamage', 'attackdamageperlevel'),
-          abilityPower: 0,
-          healthRegen: getBaseStat(champ, level, 'hpregen', 'hpregenperlevel'),
-          manaRegen: getBaseStat(champ, level, 'mpregen', 'mpregenperlevel'),
-          attackSpeed: champ.stats.attackspeed,
-          attackSpeedPerLevel: champ.stats.attackspeedperlevel / 100,
-        };
+        // Use external calculator
+        const base = StatCalculator.calculateChampionBaseStats(champ, level);
+        const itemBonuses = StatCalculator.calculateItemBonuses(state.selectedItems, itemsData);
+        const augmentBonuses = StatCalculator.calculateAugmentBonuses(state.selectedAugments, augments);
+        const final = StatCalculator.computeFinalStats(base, itemBonuses, augmentBonuses, level);
 
-        const bonuses = {
-          health: 0, mana: 0, armor: 0, magicResistance: 0,
-          attackDamage: 0, abilityPower: 0,
-          healthRegenFlat: 0, manaRegenFlat: 0,
-          attackSpeedPercent: 0,
-          abilityHaste: 0,
-          critChance: 0,
-          lethality: 0,
-          flatMagicPen: 0, percentMagicPen: 0,
-          flatArmorPen: 0, percentArmorPen: 0,
-          healShieldPower: 0,
-          lifeSteal: 0, spellVamp: 0, omnivamp: 0,
-          moveSpeedFlat: 0, moveSpeedPercent: 0,
-          attackRange: 0,
-          tenacity: 0, slowResist: 0,
-          adaptiveForce: 0
-        };
-
-        const itemStatMap = {
-          FlatHPPoolMod: 'health',
-          FlatMPPoolMod: 'mana',
-          FlatArmorMod: 'armor',
-          FlatSpellBlockMod: 'magicResistance',
-          FlatPhysicalDamageMod: 'attackDamage',
-          FlatMagicDamageMod: 'abilityPower',
-          FlatHPRegenMod: 'healthRegenFlat',
-          FlatMPRegenMod: 'manaRegenFlat',
-          PercentAttackSpeedMod: 'attackSpeedPercent',
-          AbilityHaste: 'abilityHaste',
-          CritChance: 'critChance',
-          Lethality: 'lethality',
-          FlatMagicPenetration: 'flatMagicPen',
-          PercentMagicPenetration: 'percentMagicPen',
-          FlatArmorPenetration: 'flatArmorPen',
-          PercentArmorPenetration: 'percentArmorPen',
-          HealAndShieldPower: 'healShieldPower',
-          PercentLifeStealMod: 'lifeSteal',
-          SpellVamp: 'spellVamp',
-          Omnivamp: 'omnivamp',
-          FlatMovementSpeedMod: 'moveSpeedFlat',
-          PercentMovementSpeedMod: 'moveSpeedPercent',
-          AttackRange: 'attackRange',
-          Tenacity: 'tenacity',
-          SlowResist: 'slowResist'
-        };
-
-        state.selectedItems.forEach(id => {
-          const item = itemsData[id];
-          if (!item?.stats) return;
-          for (const [key, val] of Object.entries(item.stats)) {
-            if (itemStatMap[key]) bonuses[itemStatMap[key]] += val;
-          }
-        });
-
-        const augBonuses = { health:0, mana:0, armor:0, magicResistance:0, attackDamage:0, abilityPower:0, adaptiveForce:0 };
-        state.selectedAugments.forEach(idx => {
-          const aug = augments[idx];
-          if (aug?.effects) {
-            for (const [k,v] of Object.entries(aug.effects)) {
-              if (augBonuses.hasOwnProperty(k)) augBonuses[k] += v;
-            }
-          }
-        });
-        bonuses.health += augBonuses.health;
-        bonuses.mana += augBonuses.mana;
-        bonuses.armor += augBonuses.armor;
-        bonuses.magicResistance += augBonuses.magicResistance;
-        bonuses.attackDamage += augBonuses.attackDamage;
-        bonuses.abilityPower += augBonuses.abilityPower;
-        const adaptive = augBonuses.adaptiveForce;
-
-        let adBonus = bonuses.attackDamage;
-        let apBonus = bonuses.abilityPower;
-        if (adBonus > apBonus) adBonus += adaptive;
-        else apBonus += adaptive;
-
-        const final = {
-          health: base.health + bonuses.health,
-          mana: base.mana + bonuses.mana,
-          healthRegen5: (base.healthRegen + bonuses.healthRegenFlat) * 5,
-          manaRegen5: (base.manaRegen + bonuses.manaRegenFlat) * 5,
-          armor: base.armor + bonuses.armor,
-          magicResistance: base.magicResistance + bonuses.magicResistance,
-          attackDamage: base.attackDamage + adBonus,
-          abilityPower: base.abilityPower + apBonus,
-          attackSpeed: base.attackSpeed * (1 + base.attackSpeedPerLevel * (level - 1) + bonuses.attackSpeedPercent),
-          abilityHaste: bonuses.abilityHaste,
-          critChance: bonuses.critChance,
-          lethality: bonuses.lethality,
-          flatMagicPen: bonuses.flatMagicPen,
-          percentMagicPen: bonuses.percentMagicPen,
-          flatArmorPen: bonuses.flatArmorPen,
-          percentArmorPen: bonuses.percentArmorPen,
-          healShieldPower: bonuses.healShieldPower,
-          lifeSteal: bonuses.lifeSteal,
-          spellVamp: bonuses.spellVamp,
-          omnivamp: bonuses.omnivamp,
-          moveSpeed: champ.stats.movespeed + bonuses.moveSpeedFlat,
-          moveSpeedPercent: bonuses.moveSpeedPercent,
-          attackRange: bonuses.attackRange,
-          tenacity: bonuses.tenacity,
-          slowResist: bonuses.slowResist
-        };
-
+        // Yellow highlight logic
         const isModified = (label) => {
           switch (label) {
             case 'Health': return final.health !== base.health;
             case 'Mana': return final.mana !== base.mana;
-            case 'Health Regen': return final.healthRegen5 !== base.healthRegen * 5;
-            case 'Mana Regen': return final.manaRegen5 !== base.manaRegen * 5;
+            case 'Health Regen': return final.healthRegen5 !== (base.healthRegen || 0) * 5;
+            case 'Mana Regen': return final.manaRegen5 !== (base.manaRegen || 0) * 5;
             case 'Armor': return final.armor !== base.armor;
             case 'Magic Resist': return final.magicResistance !== base.magicResistance;
             case 'Attack Damage': return final.attackDamage !== base.attackDamage;
             case 'Ability Power': return final.abilityPower !== 0;
             case 'Attack Speed':
-              const baseAS = base.attackSpeed * (1 + base.attackSpeedPerLevel * (level - 1));
+              const baseAS = base.attackSpeed * (1 + (base.attackSpeedPerLevel || 0) * (level - 1));
               return final.attackSpeed !== baseAS;
             case 'Ability Haste': return final.abilityHaste !== 0;
             case 'Crit Chance': return final.critChance !== 0;
@@ -608,7 +494,7 @@
             case 'Life Steal': return final.lifeSteal !== 0;
             case 'Spell Vamp': return final.spellVamp !== 0;
             case 'Omnivamp': return final.omnivamp !== 0;
-            case 'Move Speed': return final.moveSpeed !== champ.stats.movespeed;
+            case 'Move Speed': return final.moveSpeed !== base.moveSpeed;
             case '% Move Speed': return final.moveSpeedPercent !== 0;
             case 'Attack Range': return final.attackRange !== 0;
             case 'Tenacity': return final.tenacity !== 0;
