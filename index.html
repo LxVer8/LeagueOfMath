@@ -97,42 +97,35 @@
       const augmentSearch = document.getElementById('augmentSearch');
 
       // ---------- Load all game data ----------
-      async function loadData() {
+        async function loadData() {
         try {
-          const versionsRes = await fetch('https://ddragon.leagueoflegends.com/api/versions.json');
-          const versions = await versionsRes.json();
-          ddVersion = versions[0];
+            const versionsRes = await fetch('https://ddragon.leagueoflegends.com/api/versions.json');
+            const versions = await versionsRes.json();
+            ddVersion = versions[0];
 
-          const [champsRes, itemsRes] = await Promise.all([
+            const [champsRes, itemsRes, augmentsRes] = await Promise.all([
             fetch(`https://ddragon.leagueoflegends.com/cdn/${ddVersion}/data/en_US/champion.json`),
-            fetch(`https://ddragon.leagueoflegends.com/cdn/${ddVersion}/data/en_US/item.json`)
-          ]);
+            fetch(`https://ddragon.leagueoflegends.com/cdn/${ddVersion}/data/en_US/item.json`),
+            fetch('augments.json')   // load the scraped file (place it next to your HTML)
+            ]);
 
-          const champsJson = await champsRes.json();
-          const itemsJson = await itemsRes.json();
+            const champsJson = await champsRes.json();
+            const itemsJson = await itemsRes.json();
+            augments = await augmentsRes.json();   // this replaces the hardcoded array
 
-          championsData = champsJson.data;
-          itemsData = itemsJson.data;
+            championsData = champsJson.data;
+            itemsData = itemsJson.data;
 
-          augments = [
-            { name: "Goliath's Might", desc: "Gain 300 bonus health and 10% increased size.", effects: { health: 300 } },
-            { name: "Blade Waltz", desc: "Gain 30 adaptive force (prefers AD).", effects: { adaptiveForce: 30 } },
-            { name: "Courage of the Colossus", desc: "Gain 20 armor and 20 magic resistance.", effects: { armor: 20, magicResistance: 20 } },
-            { name: "Infernal Conduit", desc: "Your attacks burn for 5% max health magic damage.", effects: {} },
-            { name: "Windspeaker's Blessing", desc: "Heals and shields are 20% stronger.", effects: {} }
-          ];
-
-          renderChampions();
-          renderItems();
-          renderAugments();
-          calculateStats();
+            renderChampions();
+            renderItems();
+            renderAugments();
+            calculateStats();
 
         } catch (error) {
-          console.error('Failed to load data:', error);
-          championGrid.innerHTML = '<p style="color:red;">Failed to load champions.</p>';
-          itemGrid.innerHTML = '<p style="color:red;">Failed to load items.</p>';
+            console.error('Failed to load data:', error);
+            // fallback UI ...
         }
-      }
+        }
 
       // ---------- Render functions ----------
       function renderChampions() {
