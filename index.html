@@ -20,11 +20,10 @@
     .selection-item.selected { border-color: #f0e6d2; background: rgba(200, 170, 110, 0.25); }
     .selection-item img { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; }
 
-    /* Tooltip base */
+    /* Tooltip */
     .tooltip {
       display: none;
       position: absolute;
-      bottom: 110%;
       left: 50%;
       transform: translateX(-50%);
       background: #1e1e24;
@@ -39,10 +38,12 @@
       pointer-events: none;
       box-shadow: 0 2px 8px rgba(0,0,0,0.6);
       text-align: left;
+      /* Default above the icon */
+      bottom: 110%;
+      top: auto;
     }
     .selection-item:hover .tooltip { display: block; }
 
-    /* Tooltip content – mimic in-game styling */
     .tooltip strong {
       display: block;
       font-size: 0.85rem;
@@ -51,42 +52,24 @@
       font-weight: 700;
     }
 
-    /* In-game item tooltip elements */
+    /* In-game item tooltip colours */
     .tooltip stats,
     .tooltip attention {
       color: #c8aa6e;
-      font-weight: normal;
     }
-
     .tooltip passive,
     .tooltip active {
       color: #ffffff;
       display: block;
       margin-top: 2px;
     }
-
     .tooltip passiveName,
     .tooltip activeName {
       color: #ffffff;
       font-weight: bold;
     }
-
     .tooltip rarity {
       color: #9370db;
-    }
-
-    .tooltip br {
-      display: block;
-      margin: 2px 0;
-    }
-
-    /* Override for augment tooltips (keep name bold at top) */
-    .augment-tooltip strong {
-      display: block;
-      font-size: 0.85rem;
-      margin-bottom: 3px;
-      color: #f0e6d2;
-      font-weight: 700;
     }
 
     .search-input { width: 100%; padding: 6px 10px; margin-bottom: 8px; background: #2a2e38; border: 1px solid #444; border-radius: 4px; color: #e0e0e0; font-size: 0.85rem; outline: none; }
@@ -188,6 +171,55 @@
         'Slow Resist': 'https://wiki.leagueoflegends.com/en-us/images/thumb/Slow_immune_icon.png/15px-Slow_immune_icon.png?4ad41'
       };
 
+      // --- Smart tooltip positioning ---
+      function positionTooltip(tooltip, icon, grid) {
+        // Temporarily make visible but hidden to measure
+        tooltip.style.display = 'block';
+        tooltip.style.visibility = 'hidden';
+        const tooltipRect = tooltip.getBoundingClientRect();
+        const gridRect = grid.getBoundingClientRect();
+        const iconRect = icon.getBoundingClientRect();
+
+        const padding = 4;
+        const tooltipWidth = tooltipRect.width;
+        const tooltipHeight = tooltipRect.height;
+
+        // Determine vertical position: default above (bottom = 110%)
+        let placeAbove = true;
+        const spaceAbove = iconRect.top - gridRect.top;
+        if (spaceAbove < tooltipHeight + padding) {
+          placeAbove = false;
+        }
+
+        if (placeAbove) {
+          tooltip.style.top = 'auto';
+          tooltip.style.bottom = '110%';
+        } else {
+          tooltip.style.bottom = 'auto';
+          tooltip.style.top = '110%';
+        }
+
+        // Horizontal clamping
+        let left = iconRect.left + iconRect.width / 2 - tooltipWidth / 2;
+        const minLeft = gridRect.left + padding;
+        const maxLeft = gridRect.right - tooltipWidth - padding;
+        if (left < minLeft) left = minLeft;
+        if (left > maxLeft) left = maxLeft;
+
+        tooltip.style.left = (left - iconRect.left) + 'px';
+        tooltip.style.transform = 'none';
+        tooltip.style.visibility = 'visible';
+      }
+
+      function resetTooltip(tooltip) {
+        tooltip.style.display = '';
+        tooltip.style.visibility = '';
+        tooltip.style.left = '50%';
+        tooltip.style.transform = 'translateX(-50%)';
+        tooltip.style.top = 'auto';
+        tooltip.style.bottom = '110%';
+      }
+
       async function loadData() {
         try {
           const versionsRes = await fetch('https://ddragon.leagueoflegends.com/api/versions.json');
@@ -250,10 +282,8 @@
             img.onerror = () => { img.remove(); div.textContent = item.name.charAt(0); };
             div.appendChild(img);
 
-            // --- In-game tooltip ---
             const tooltip = document.createElement('span');
             tooltip.className = 'tooltip';
-            // Data Dragon's item.description contains the full HTML tooltip (stats, passives, etc.)
             const descriptionHTML = item.description || '';
             tooltip.innerHTML = `<strong>${item.name}</strong>${descriptionHTML}`;
             div.appendChild(tooltip);
@@ -261,19 +291,11 @@
             if (state.selectedItems.has(id)) div.classList.add('selected');
             div.addEventListener('click', () => toggleItem(id, div));
 
-            // Smart tooltip positioning
             div.addEventListener('mouseenter', () => {
-              const gridRect = itemGrid.getBoundingClientRect();
-              const iconRect = div.getBoundingClientRect();
-              const tw = 220, pad = 4;
-              let left = iconRect.left + iconRect.width/2 - tw/2;
-              left = Math.min(Math.max(left, gridRect.left + pad), gridRect.right - tw - pad);
-              tooltip.style.left = (left - iconRect.left) + 'px';
-              tooltip.style.transform = 'none';
+              positionTooltip(tooltip, div, itemGrid);
             });
             div.addEventListener('mouseleave', () => {
-              tooltip.style.left = '50%';
-              tooltip.style.transform = 'translateX(-50%)';
+              resetTooltip(tooltip);
             });
 
             itemGrid.appendChild(div);
@@ -310,19 +332,14 @@
 
           if (state.selectedAugments.has(idx)) div.classList.add('selected');
           div.addEventListener('click', () => toggleAugment(idx, div));
+
           div.addEventListener('mouseenter', () => {
-            const gridRect = augmentGrid.getBoundingClientRect();
-            const iconRect = div.getBoundingClientRect();
-            const tw = 220, pad = 4;
-            let left = iconRect.left + iconRect.width/2 - tw/2;
-            left = Math.min(Math.max(left, gridRect.left + pad), gridRect.right - tw - pad);
-            tooltip.style.left = (left - iconRect.left) + 'px';
-            tooltip.style.transform = 'none';
+            positionTooltip(tooltip, div, augmentGrid);
           });
           div.addEventListener('mouseleave', () => {
-            tooltip.style.left = '50%';
-            tooltip.style.transform = 'translateX(-50%)';
+            resetTooltip(tooltip);
           });
+
           augmentGrid.appendChild(div);
         });
       }
