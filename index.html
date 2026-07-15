@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>LoL Arena Stat Calculator</title>
   <style>
-    /* ---------- Inline fallback styles (overrides styles.css if needed) ---------- */
+    /* ---------- Layout & Reset ---------- */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Segoe UI', Arial, sans-serif; background: #0a0e14; color: #e0e0e0; height: 100vh; overflow: hidden; }
     .main-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1fr auto; height: 100vh; gap: 8px; padding: 8px; }
@@ -34,11 +34,48 @@
     .selection-grid::-webkit-scrollbar { width: 6px; }
     .selection-grid::-webkit-scrollbar-track { background: #111; border-radius: 3px; }
     .selection-grid::-webkit-scrollbar-thumb { background: #555; border-radius: 3px; }
+
+    /* ---------- Hotbar styles ---------- */
+    .hotbar {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+      min-height: 40px;
+      margin-bottom: 8px;
+      padding: 4px;
+      background: #0f1219;
+      border-radius: 6px;
+      align-items: center;
+    }
+    .hotbar-item {
+      width: 36px;
+      height: 36px;
+      border: 2px solid transparent;
+      border-radius: 4px;
+      cursor: pointer;
+      position: relative;
+      transition: border-color 0.2s;
+    }
+    .hotbar-item:hover {
+      border-color: #c8aa6e;
+    }
+    .hotbar-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 3px;
+    }
+    .hotbar-placeholder {
+      color: #666;
+      font-size: 0.8rem;
+      margin-left: 4px;
+    }
   </style>
-  <!-- You can still link styles.css – it will be overridden by the above if needed -->
 </head>
 <body>
   <div class="main-grid">
+    
+    <!-- CHAMPIONS -->
     <div class="section champion-section">
       <h2>Pick a Champion</h2>
       <input type="text" class="search-input" id="championSearch" placeholder="Search champions…">
@@ -48,27 +85,43 @@
       </div>
       <div class="selection-grid" id="championGrid"><p style="color:#aaa; text-align:center;">Loading…</p></div>
     </div>
+
+    <!-- ITEMS -->
     <div class="section items-section">
-      <h2>Pick Items</h2>
+      <h2>Pick Items (max 6)</h2>
       <input type="text" class="search-input" id="itemSearch" placeholder="Search items…">
+      <div class="hotbar" id="selectedItemsBar"></div>
       <div class="selection-grid" id="itemGrid"><p style="color:#aaa; text-align:center;">Loading…</p></div>
     </div>
+
+    <!-- AUGMENTS -->
     <div class="section augments-section">
-      <h2>Pick Augments</h2>
+      <h2>Pick Augments (max 6)</h2>
       <input type="text" class="search-input" id="augmentSearch" placeholder="Search augments…">
+      <div class="hotbar" id="selectedAugmentsBar"></div>
       <div class="selection-grid" id="augmentGrid"><p style="color:#aaa; text-align:center;">Loading…</p></div>
     </div>
+
+    <!-- FINAL STATS -->
     <div class="section stats-section">
       <h2>Final Stats</h2>
       <table class="stats-table" id="statsTable"><tr><td colspan="2">Select a champion to begin</td></tr></table>
     </div>
+
   </div>
 
   <script>
     (function() {
-      // State
-      const state = { selectedChampion: null, selectedItems: new Set(), selectedAugments: new Set(), level: 1 };
+      // ---------- State ----------
+      const state = {
+        selectedChampion: null,
+        selectedItems: new Set(),    // stores item IDs
+        selectedAugments: new Set(), // stores augment indices
+        level: 1
+      };
+      const MAX_SELECTIONS = 6;
 
+      // Data
       let championsData = {};
       let itemsData = {};
       let augments = [];
@@ -78,6 +131,8 @@
       const championGrid = document.getElementById('championGrid');
       const itemGrid = document.getElementById('itemGrid');
       const augmentGrid = document.getElementById('augmentGrid');
+      const selectedItemsBar = document.getElementById('selectedItemsBar');
+      const selectedAugmentsBar = document.getElementById('selectedAugmentsBar');
       const levelInput = document.getElementById('levelInput');
       const statsTable = document.getElementById('statsTable');
       const championSearch = document.getElementById('championSearch');
@@ -87,15 +142,11 @@
       // ---------- Load data ----------
       async function loadData() {
         try {
-          console.log('Fetching latest version...');
           const versionsRes = await fetch('https://ddragon.leagueoflegends.com/api/versions.json');
           if (!versionsRes.ok) throw new Error('Version fetch failed');
           const versions = await versionsRes.json();
           ddVersion = versions[0];
-          console.log('Using version:', ddVersion);
 
-          // Fetch champions & items (essential)
-          console.log('Fetching champion & item data...');
           const [champsRes, itemsRes] = await Promise.all([
             fetch(`https://ddragon.leagueoflegends.com/cdn/${ddVersion}/data/en_US/champion.json`),
             fetch(`https://ddragon.leagueoflegends.com/cdn/${ddVersion}/data/en_US/item.json`)
@@ -104,38 +155,29 @@
 
           const champsJson = await champsRes.json();
           const itemsJson = await itemsRes.json();
-
           championsData = champsJson.data;
           itemsData = itemsJson.data;
-          console.log(`Loaded ${Object.keys(championsData).length} champions, ${Object.keys(itemsData).length} items.`);
 
-          // Augments (non-critical)
           try {
             const augRes = await fetch('augments.json');
-            if (augRes.ok) {
-              augments = await augRes.json();
-              console.log(`Loaded ${augments.length} augments from file.`);
-            } else {
-              throw new Error('File not found');
-            }
+            if (augRes.ok) augments = await augRes.json();
+            else throw new Error('File not found');
           } catch (e) {
             console.warn('augments.json missing – using empty list');
             augments = [];
           }
 
-          renderAll();
+          renderChampions();
+          renderItems();
+          renderAugments();
+          updateSelectedItemsBar();
+          updateSelectedAugmentsBar();
+          calculateStats();
         } catch (error) {
           console.error('Core data loading error:', error);
-          championGrid.innerHTML = '<p style="color:red;">Failed to load champions. Check console.</p>';
-          itemGrid.innerHTML = '<p style="color:red;">Failed to load items. Check console.</p>';
+          championGrid.innerHTML = '<p style="color:red;">Failed to load champions.</p>';
+          itemGrid.innerHTML = '<p style="color:red;">Failed to load items.</p>';
         }
-      }
-
-      function renderAll() {
-        renderChampions();
-        renderItems();
-        renderAugments();
-        calculateStats();
       }
 
       // ---------- Render functions ----------
@@ -168,9 +210,8 @@
           if (item.tags && (item.tags.includes('Trinket') || item.tags.includes('Consumable') || item.tags.includes('GoldPer'))) return false;
           return true;
         });
-        console.log(`Rendering ${itemArray.length} items after filtering.`);
         if (itemArray.length === 0) {
-          itemGrid.innerHTML = '<p>No items to display (check filter).</p>';
+          itemGrid.innerHTML = '<p>No items to display.</p>';
           return;
         }
         itemArray.forEach(([id, item]) => {
@@ -250,7 +291,126 @@
         return ['#3c5a77','#5e4b3c','#2e5a4b','#6b4e5a','#4a6e5f'][index % 5];
       }
 
-      // ---------- Search ----------
+      // ---------- Hotbar updates ----------
+      function updateSelectedItemsBar() {
+        selectedItemsBar.innerHTML = '';
+        if (state.selectedItems.size === 0) {
+          selectedItemsBar.innerHTML = '<span class="hotbar-placeholder">No items selected</span>';
+          return;
+        }
+        state.selectedItems.forEach(id => {
+          const item = itemsData[id];
+          if (!item) return;
+          const div = document.createElement('div');
+          div.className = 'hotbar-item';
+          const img = document.createElement('img');
+          img.src = `https://ddragon.leagueoflegends.com/cdn/${ddVersion}/img/item/${id}.png`;
+          img.alt = item.name;
+          img.title = item.name + ' (click to remove)';
+          div.appendChild(img);
+          div.addEventListener('click', (e) => {
+            e.stopPropagation();
+            // Deselect this item
+            state.selectedItems.delete(id);
+            updateSelectedItemsBar();
+            // Update the selection grid highlight
+            const gridItem = document.querySelector(`#itemGrid .selection-item[data-item-id="${id}"]`);
+            if (gridItem) gridItem.classList.remove('selected');
+            calculateStats();
+          });
+          selectedItemsBar.appendChild(div);
+        });
+      }
+
+      function updateSelectedAugmentsBar() {
+        selectedAugmentsBar.innerHTML = '';
+        if (state.selectedAugments.size === 0) {
+          selectedAugmentsBar.innerHTML = '<span class="hotbar-placeholder">No augments selected</span>';
+          return;
+        }
+        state.selectedAugments.forEach(index => {
+          const aug = augments[index];
+          if (!aug) return;
+          const div = document.createElement('div');
+          div.className = 'hotbar-item';
+          // Show icon if available, otherwise fallback letter
+          if (aug.icon) {
+            const img = document.createElement('img');
+            img.src = aug.icon;
+            img.alt = aug.name;
+            img.title = aug.name + ' (click to remove)';
+            div.appendChild(img);
+          } else {
+            div.style.backgroundColor = getColor(index);
+            div.style.display = 'flex';
+            div.style.alignItems = 'center';
+            div.style.justifyContent = 'center';
+            div.style.fontSize = '0.7rem';
+            div.style.fontWeight = 'bold';
+            div.textContent = aug.name.charAt(0);
+            div.title = aug.name + ' (click to remove)';
+          }
+          div.addEventListener('click', (e) => {
+            e.stopPropagation();
+            state.selectedAugments.delete(index);
+            updateSelectedAugmentsBar();
+            const gridItem = document.querySelector(`#augmentGrid .selection-item[data-augment-index="${index}"]`);
+            if (gridItem) gridItem.classList.remove('selected');
+            calculateStats();
+          });
+          selectedAugmentsBar.appendChild(div);
+        });
+      }
+
+      // ---------- Selection handlers ----------
+      function selectChampion(key, element) {
+        document.querySelectorAll('#championGrid .selection-item.selected').forEach(el => el.classList.remove('selected'));
+        state.selectedChampion = key;
+        element.classList.add('selected');
+        calculateStats();
+      }
+
+      function toggleItem(id, element) {
+        if (state.selectedItems.has(id)) {
+          // Deselect
+          state.selectedItems.delete(id);
+          element.classList.remove('selected');
+        } else {
+          // Select – check limit
+          if (state.selectedItems.size >= MAX_SELECTIONS) {
+            alert(`You can only select up to ${MAX_SELECTIONS} items.`);
+            return;
+          }
+          state.selectedItems.add(id);
+          element.classList.add('selected');
+        }
+        updateSelectedItemsBar();
+        calculateStats();
+      }
+
+      function toggleAugment(index, element) {
+        if (state.selectedAugments.has(index)) {
+          state.selectedAugments.delete(index);
+          element.classList.remove('selected');
+        } else {
+          if (state.selectedAugments.size >= MAX_SELECTIONS) {
+            alert(`You can only select up to ${MAX_SELECTIONS} augments.`);
+            return;
+          }
+          state.selectedAugments.add(index);
+          element.classList.add('selected');
+        }
+        updateSelectedAugmentsBar();
+        calculateStats();
+      }
+
+      // ---------- Level input ----------
+      levelInput.addEventListener('input', () => {
+        state.level = parseInt(levelInput.value) || 1;
+        calculateStats();
+      });
+
+      // ---------- Search filtering ----------
       championSearch.addEventListener('input', () => {
         const q = championSearch.value.toLowerCase();
         document.querySelectorAll('#championGrid .selection-item').forEach(el => {
@@ -276,29 +436,7 @@
         });
       });
 
-      // ---------- Selection ----------
-      function selectChampion(key, el) {
-        document.querySelectorAll('#championGrid .selection-item.selected').forEach(e => e.classList.remove('selected'));
-        state.selectedChampion = key;
-        el.classList.add('selected');
-        calculateStats();
-      }
-      function toggleItem(id, el) {
-        if (state.selectedItems.has(id)) { state.selectedItems.delete(id); el.classList.remove('selected'); }
-        else { state.selectedItems.add(id); el.classList.add('selected'); }
-        calculateStats();
-      }
-      function toggleAugment(idx, el) {
-        if (state.selectedAugments.has(idx)) { state.selectedAugments.delete(idx); el.classList.remove('selected'); }
-        else { state.selectedAugments.add(idx); el.classList.add('selected'); }
-        calculateStats();
-      }
-      levelInput.addEventListener('input', () => {
-        state.level = parseInt(levelInput.value) || 1;
-        calculateStats();
-      });
-
-      // ---------- Calculation ----------
+      // ---------- Stat calculation ----------
       function getStat(champData, lvl, baseKey, growthKey) {
         const g = lvl - 1;
         return champData.stats[baseKey] + champData.stats[growthKey] * g * (0.7025 + 0.0175 * g);
