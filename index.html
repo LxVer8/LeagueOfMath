@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>LoL Arena Stat Calculator</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: 20px auto; }
+    select, input, button { margin: 5px; }
+    .augment-list { display: flex; flex-wrap: wrap; gap: 10px; }
+    .augment { border: 1px solid #ccc; padding: 5px; cursor: pointer; position: relative; }
+    .augment:hover .tooltip { display: block; }
+    .tooltip { display: none; position: absolute; background: #333; color: #fff; padding: 5px;
+               border-radius: 4px; width: 200px; bottom: 100%; left: 0; z-index: 10; }
+    .stats-table td { padding: 4px 8px; }
+    #loading { color: #888; }
+  </style>
+</head>
+<body>
+  <h1>Arena Stat Calculator</h1>
+  <div id="loading">Loading game data…</div>
+
+  <div id="app" style="display:none;">
+    <label>Champion:
+      <select id="championSelect"></select>
+    </label>
+    <label>Level:
+      <input type="number" id="levelInput" value="1" min="1" max="18">
+    </label>
+
+    <h3>Items (select any number)</h3>
+    <div id="itemList" style="max-height: 200px; overflow-y: auto;"></div>
+
+    <h3>Arena Augments (click to toggle)</h3>
+    <div class="augment-list" id="augmentList"></div>
+
+    <hr>
+    <h2>Total Stats</h2>
+    <table class="stats-table" id="statsTable"></table>
+  </div>
+
+  <script>
+    (async function() {
+      // ---------- Load Data Dragon ----------
+      const VERSION_URL = 'https://ddragon.leagueoflegends.com/api/versions.json';
+      const versions = await fetch(VERSION_URL).then(r => r.json());
+      const latest = versions[0]; // e.g. "14.11.1"
+
+      const [championsRes, itemsRes] = await Promise.all([
+        fetch(`https://ddragon.leagueoflegends.com/cdn/${latest}/data/en_US/champion.json`),
+        fetch(`https://ddragon.leagueoflegends.com/cdn/${latest}/data/en_US/item.json`)
+      ]);
+      const championsData = await championsRes.json();
+      const itemsData = await itemsRes.json();
+
+      const champions = championsData.data; // { Aatrox: {...}, Ahri: {...}, ... }
+      const items = itemsData.data;         // { "1001": {...}, ... }
+
+      // ---------- Hardcoded sample augments (replace with scraped data) ----------
+      const augments = [
+        { name: "Goliath's Might", desc: "Gain 300 bonus health and 10% increased size.", effects: { health: 300 } },
+        { name: "Blade Waltz", desc: "Gain 30 adaptive force (prefers AD).", effects: { adaptiveForce: 30 } },
+        { name: "Courage of the Colossus", desc: "Gain 20 armor and 20 magic resistance.", effects: { armor: 20, magicResistance: 20 } },
+        { name: "Infernal Conduit", desc: "Your attacks burn for 5% max health magic damage.", effects: {} }, // no direct stat
+        { name: "Windspeaker's Blessing", desc: "Heals and shields are 20% stronger.", effects: {} }
+      ];
+
+      // ---------- Build UI ----------
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+
+      const champSelect = document.getElementById('championSelect');
+      const levelInput = document.getElementById('levelInput');
+      const itemList = document.getElementById('itemList');
+      const augmentList = document.getElementById('augmentList');
+      const statsTable = document.getElementById('statsTable');
+
+      // Champion dropdown
+      for (const [key, champ] of Object.entries(champions)) {
+        const opt = document.createElement('option');
+        opt.value = key;
+        opt.textContent = champ.name;
+        champSelect.appendChild(opt);
+      }
+
+      // Item checkboxes (filter out consumables / trinkets by gold cost or tags)
+      for (const [id, item] of Object.entries(items)) {
+        if (item.gold && item.gold.total > 0 && !item.tags?.includes('Trinket') && !item.tags?.includes('Consumable')) {
+          const label = document.createElement('label');
+          label.style.display = 'block';
+          label.innerHTML = `<input type="checkbox" value="${id}"> ${item.name}`;
+          itemList.appendChild(label);
+        }
+      }
+
+      // Augments as toggle buttons
+      augments.forEach((aug, i) => {
+        const div = document.createElement('div');
+        div.className = 'augment';
+        div.dataset.index = i;
+        div.innerHTML = `${aug.name} <div class="tooltip">${aug.desc}</div>`;
+        div.addEventListener('click', () => {
+          div.classList.toggle('active');
+          calculateStats();
+        });
+        augmentList.appendChild(div);
+      });
+
+      // Recalculate on any change
+      champSelect.addEventListener('change', calculateStats);
+      levelInput.addEventListener('input', calculateStats);
+      itemList.addEventListener('change', calculateStats);
+
+      // ---------- Stat calculation ----------
+      function getChampionStat(champData, level, statBaseKey, statGrowthKey) {
+        const base = champData.stats[statBaseKey];
+        const growth = champData.stats[statGrowthKey];
+        // standard growth formula (applies to most stats)
+        const g = level - 1;
+        const factor = 0.7025 + 0.0175 * g;
+        return base + growth * g * factor;
+      }
+
+      function calculateStats() {
+        const champKey = champSelect.value;
+        const level = parseInt(levelInput.value) || 1;
+        const champ = champions[champKey];
+        if (!champ) return;
+
+        // Base stats from champion at given level
+        const baseStats = {
+          health: getChampionStat(champ, level, 'hp', 'hpperlevel'),
+          mana: getChampionStat(champ, level, 'mp', 'mpperlevel'),
+          armor: getChampionStat(champ, level, 'armor', 'armorperlevel'),
+          magicResistance: getChampionStat(champ, level, 'spellblock', 'spellblockperlevel'),
+          attackDamage: getChampionStat(champ, level, 'attackdamage', 'attackdamageperlevel'),
+          abilityPower: 0, // champions start with 0 AP
+        };
+
+        // Items
+        const checkedItems = document.querySelectorAll('#itemList input:checked');
+        const itemBonuses = { health: 0, mana: 0, armor: 0, magicResistance: 0, attackDamage: 0, abilityPower: 0, adaptiveForce: 0 };
+        checkedItems.forEach(cb => {
+          const item = items[cb.value];
+          if (!item || !item.stats) return;
+          // Map Data Dragon stat names to our keys
+          const map = {
+            FlatHPPoolMod: 'health',
+            FlatMPPoolMod: 'mana',
+            FlatArmorMod: 'armor',
+            FlatSpellBlockMod: 'magicResistance',
+            FlatPhysicalDamageMod: 'attackDamage',
+            FlatMagicDamageMod: 'abilityPower',
+          };
+          for (const [statKey, val] of Object.entries(item.stats)) {
+            if (map[statKey]) itemBonuses[map[statKey]] += val;
+            // percent stats etc. could be added here
+          }
+        });
+
+        // Augments
+        const augmentBonuses = { health: 0, mana: 0, armor: 0, magicResistance: 0, attackDamage: 0, abilityPower: 0, adaptiveForce: 0 };
+        document.querySelectorAll('.augment.active').forEach(el => {
+          const aug = augments[el.dataset.index];
+          if (aug.effects) {
+            for (const [key, val] of Object.entries(aug.effects)) {
+              if (augmentBonuses.hasOwnProperty(key)) {
+                augmentBonuses[key] += val;
+              }
+            }
+          }
+        });
+
+        // Adaptive force: if AD > AP + adaptiveForce -> goes to AD, else AP (simplified)
+        let adBonus = itemBonuses.attackDamage + augmentBonuses.attackDamage;
+        let apBonus = itemBonuses.abilityPower + augmentBonuses.abilityPower;
+        let adapt = augmentBonuses.adaptiveForce;
+        if (adBonus > apBonus) {
+          adBonus += adapt;
+        } else {
+          apBonus += adapt;
+        }
+
+        const totals = {
+          Health: Math.round(baseStats.health + itemBonuses.health + augmentBonuses.health),
+          Mana: Math.round(baseStats.mana + itemBonuses.mana + augmentBonuses.mana),
+          Armor: Math.round(baseStats.armor + itemBonuses.armor + augmentBonuses.armor),
+          'Magic Resist': Math.round(baseStats.magicResistance + itemBonuses.magicResistance + augmentBonuses.magicResistance),
+          'Attack Damage': Math.round(baseStats.attackDamage + adBonus),
+          'Ability Power': Math.round(baseStats.abilityPower + apBonus),
+        };
+
+        // Render stats table
+        statsTable.innerHTML = Object.entries(totals)
+          .map(([name, value]) => `<tr><td><b>${name}</b></td><td>${value}</td></tr>`)
+          .join('');
+      }
+
+      calculateStats();
+    })();
+  </script>
+</body>
+</html>
