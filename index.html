@@ -44,6 +44,14 @@
       text-align: right;
     }
 
+    /* Small icon next to stat name */
+    .stat-icon {
+      width: 18px;
+      height: 18px;
+      vertical-align: middle;
+      margin-right: 4px;
+    }
+
     .level-input-container { display: flex; align-items: center; justify-content: center; margin: 6px 0; }
     .level-input-container input { width: 55px; padding: 4px; background: #2a2e38; border: 1px solid #444; border-radius: 4px; color: #e0e0e0; text-align: center; }
     .selection-grid::-webkit-scrollbar, .stats-section::-webkit-scrollbar { width: 6px; }
@@ -111,8 +119,37 @@
       const itemSearch = document.getElementById('itemSearch');
       const augmentSearch = document.getElementById('augmentSearch');
 
-      // ---------- Stat icon mapping ----------
+      // ---------- Stat icon mapping (wiki URLs) ----------
       const statIcons = {
+        'Health': 'https://wiki.leagueoflegends.com/en-us/images/Health_icon.png',
+        'Mana': 'https://wiki.leagueoflegends.com/en-us/images/Mana_icon.png',
+        'Health Regen (per 5s)': 'https://wiki.leagueoflegends.com/en-us/images/Health_regeneration_icon.png',
+        'Mana Regen (per 5s)': 'https://wiki.leagueoflegends.com/en-us/images/Mana_regeneration_icon.png',
+        'Armor': 'https://wiki.leagueoflegends.com/en-us/images/Armor_icon.png',
+        'Magic Resist': 'https://wiki.leagueoflegends.com/en-us/images/Magic_resistance_icon.png',
+        'Attack Damage': 'https://wiki.leagueoflegends.com/en-us/images/Attack_damage_icon.png',
+        'Ability Power': 'https://wiki.leagueoflegends.com/en-us/images/Ability_power_icon.png',
+        'Attack Speed': 'https://wiki.leagueoflegends.com/en-us/images/Attack_speed_icon.png',
+        'Ability Haste': 'https://wiki.leagueoflegends.com/en-us/images/Ability_haste_icon.png',
+        'Crit Chance': 'https://wiki.leagueoflegends.com/en-us/images/Critical_strike_chance_icon.png',
+        'Lethality': 'https://wiki.leagueoflegends.com/en-us/images/Lethality_icon.png',
+        'Flat Magic Pen': 'https://wiki.leagueoflegends.com/en-us/images/Magic_penetration_icon.png',
+        '% Magic Pen': 'https://wiki.leagueoflegends.com/en-us/images/Percent_magic_penetration_icon.png',
+        'Flat Armor Pen': 'https://wiki.leagueoflegends.com/en-us/images/Armor_penetration_icon.png',
+        '% Armor Pen': 'https://wiki.leagueoflegends.com/en-us/images/Percent_armor_penetration_icon.png',
+        'Heal / Shield Power': 'https://wiki.leagueoflegends.com/en-us/images/Heal_and_shield_power_icon.png',
+        'Life Steal': 'https://wiki.leagueoflegends.com/en-us/images/Life_steal_icon.png',
+        'Spell Vamp': 'https://wiki.leagueoflegends.com/en-us/images/Spell_vamp_icon.png',
+        'Omnivamp': 'https://wiki.leagueoflegends.com/en-us/images/Omnivamp_icon.png',
+        'Move Speed': 'https://wiki.leagueoflegends.com/en-us/images/Movement_speed_icon.png',
+        'Move Speed %': 'https://wiki.leagueoflegends.com/en-us/images/Movement_speed_icon.png',
+        'Attack Range': 'https://wiki.leagueoflegends.com/en-us/images/Attack_range_icon.png',
+        'Tenacity': 'https://wiki.leagueoflegends.com/en-us/images/Tenacity_icon.png',
+        'Slow Resist': 'https://wiki.leagueoflegends.com/en-us/images/Slow_resist_icon.png'
+      };
+
+      // Fallback emojis (if image fails)
+      const fallbackEmojis = {
         'Health': '❤️',
         'Mana': '💧',
         'Health Regen (per 5s)': '💚',
@@ -473,14 +510,24 @@
 
         const rows = [];
         function addRow(label, value, formatter) {
-          const icon = statIcons[label] || '';
+          const iconUrl = statIcons[label] || '';
+          const fallbackEmoji = fallbackEmojis[label] || '';
           let display;
           if (formatter === 'percent') display = (value * 100).toFixed(1) + '%';
           else if (formatter === 'as') display = value.toFixed(3);
           else if (formatter === 'integer') display = Math.round(value);
           else if (formatter === 'flat') display = Math.round(value);
           else display = value;
-          rows.push(`<tr><td>${icon} ${label}</td><td>${display}</td></tr>`);
+
+          // Build the icon cell with image + fallback
+          let iconHTML = '';
+          if (iconUrl) {
+            iconHTML = `<img class="stat-icon" src="${iconUrl}" alt="${label}" onerror="this.style.display='none'; this.nextSibling.style.display='inline';">` +
+                       `<span style="display:none;">${fallbackEmoji}</span>`;
+          } else {
+            iconHTML = fallbackEmoji ? fallbackEmoji + ' ' : '';
+          }
+          rows.push(`<tr><td>${iconHTML} ${label}</td><td>${display}</td></tr>`);
         }
 
         addRow('Health', base.health + bonuses.health, 'integer');
