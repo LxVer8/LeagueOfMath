@@ -96,37 +96,46 @@
       const augmentSearch = document.getElementById('augmentSearch');
 
       // ---------- Load all game data ----------
-      async function loadData() {
-        try {
-          const versionsRes = await fetch('https://ddragon.leagueoflegends.com/api/versions.json');
-          const versions = await versionsRes.json();
-          ddVersion = versions[0];
+async function loadData() {
+  try {
+    // Load version and basic data first
+    const versionsRes = await fetch('https://ddragon.leagueoflegends.com/api/versions.json');
+    const versions = await versionsRes.json();
+    ddVersion = versions[0];
 
-          const [champsRes, itemsRes, augmentsRes] = await Promise.all([
-            fetch(`https://ddragon.leagueoflegends.com/cdn/${ddVersion}/data/en_US/champion.json`),
-            fetch(`https://ddragon.leagueoflegends.com/cdn/${ddVersion}/data/en_US/item.json`),
-            fetch('augments.json')   // load local JSON
-          ]);
+    const [champsRes, itemsRes] = await Promise.all([
+      fetch(`https://ddragon.leagueoflegends.com/cdn/${ddVersion}/data/en_US/champion.json`),
+      fetch(`https://ddragon.leagueoflegends.com/cdn/${ddVersion}/data/en_US/item.json`)
+    ]);
 
-          const champsJson = await champsRes.json();
-          const itemsJson = await itemsRes.json();
-          augments = await augmentsRes.json();
+    const champsJson = await champsRes.json();
+    const itemsJson = await itemsRes.json();
 
-          championsData = champsJson.data;
-          itemsData = itemsJson.data;
+    championsData = champsJson.data;
+    itemsData = itemsJson.data;
 
-          renderChampions();
-          renderItems();
-          renderAugments();
-          calculateStats();
+    // Attempt to load augments, but fallback gracefully
+    try {
+      const augmentsRes = await fetch('augments.json');
+      augments = await augmentsRes.json();
+    } catch (augError) {
+      console.warn('augments.json not found – using empty list', augError);
+      augments = []; // empty fallback so the rest works
+      augmentGrid.innerHTML = '<p style="color:orange;">No augment data found. Run the scraper to generate augments.json.</p>';
+    }
 
-        } catch (error) {
-          console.error('Failed to load data:', error);
-          championGrid.innerHTML = '<p style="color:red;">Failed to load champions.</p>';
-          itemGrid.innerHTML = '<p style="color:red;">Failed to load items.</p>';
-          augmentGrid.innerHTML = '<p style="color:red;">Failed to load augments. Make sure augments.json is present and you are using a local server.</p>';
-        }
-      }
+    renderChampions();
+    renderItems();
+    renderAugments();
+    calculateStats();
+
+  } catch (error) {
+    console.error('Failed to load core data:', error);
+    championGrid.innerHTML = '<p style="color:red;">Failed to load champions.</p>';
+    itemGrid.innerHTML = '<p style="color:red;">Failed to load items.</p>';
+    // Augments may already have a warning from inner catch
+  }
+}
 
       // ---------- Render functions ----------
       function renderChampions() {
