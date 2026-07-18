@@ -269,16 +269,39 @@
         console.log('Rendered champions:', entries.length);
       }
 
-      function renderItems() {
-        itemGrid.innerHTML = '';
-        console.log('Filtering items...');
-        const filteredItems = Object.entries(itemsData).filter(([id, item]) => {
-          if (!item.gold?.total || item.gold.total <= 0) return false;
-          if (item.tags && (item.tags.includes('Trinket') || item.tags.includes('Consumable') || item.tags.includes('GoldPer'))) return false;
-          if (!item.maps || (!item.maps['11'] && !item.maps['21'])) return false;
-          if (item.tags && item.tags.includes('Jungle')) return false;
-          if (/doran/i.test(item.name)) return false;
-          if (item.into && item.into.length > 0) return false;
+function renderItems() {
+  itemGrid.innerHTML = '';
+  console.log('Filtering items...');
+
+  // Items to manually remove (case‑sensitive names)
+  const REMOVED_NAMES = new Set([
+    'Cull',
+    'Recall',
+    'Disabled Recall',
+    'Total Biscuit of Everlasting Will',
+    'Trailblazer',
+    'Chemtech Putrifier',
+    "Mejai's Soulstealer",
+    'Deathfire Grasp',
+    'Leeching Leer',
+    'Stirring Wardstone'
+  ]);
+
+  const filteredItems = Object.entries(itemsData).filter(([id, item]) => {
+    // Basic filters
+    if (!item.gold?.total || item.gold.total <= 0) return false;
+    if (item.tags && (item.tags.includes('Trinket') || item.tags.includes('Consumable') || item.tags.includes('GoldPer'))) return false;
+    if (!item.maps || (!item.maps['11'] && !item.maps['21'])) return false;
+
+    // Jungle pets, Doran's items, components
+    if (item.tags && item.tags.includes('Jungle')) return false;
+    if (/doran/i.test(item.name)) return false;
+    if (item.into && item.into.length > 0) return false;
+
+    // --- new blacklist ---
+    if (REMOVED_NAMES.has(item.name)) return false;
+    if (/^Guardian's/.test(item.name)) return false;          // any Guardian's item
+    if (item.tags && item.tags.includes('Boots')) return false; // all upgraded boots
           return true;
         });
         console.log('Items after filtering:', filteredItems.length);
