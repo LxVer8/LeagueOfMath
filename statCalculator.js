@@ -115,25 +115,25 @@ function calculateAugmentBonuses(selectedAugments, augments) {
 }
 
 // ----- CUSTOM AUGMENT EFFECTS -----
-// Each entry is a function that directly modifies the final stats object.
-// Parameters: (finalStats, baseStats, itemBonuses, level)
 const CUSTOM_AUGMENTS = {
-'ADAPt': (final, base) => {
-  const bonusAD = final.attackDamage - base.attackDamage;
-  console.log('ADAPt triggered! Bonus AD:', bonusAD);
-  if (bonusAD > 0) {
-    final.attackDamage = base.attackDamage;
-    final.abilityPower += bonusAD * 1.67;
+  'ADAPt': (final, base) => {
+    const bonusAD = final.attackDamage - base.attackDamage;
+    console.log('ADAPt triggered! Bonus AD:', bonusAD);
+    if (bonusAD > 0) {
+      final.attackDamage = base.attackDamage;
+      final.abilityPower += bonusAD * 1.67;
+    }
+    final.abilityPower *= 1.10;
+    console.log('Final AD:', final.attackDamage, 'Final AP:', final.abilityPower);
   }
-  final.abilityPower *= 1.10;
-  console.log('Final AD:', final.attackDamage, 'Final AP:', final.abilityPower);
-}
+  // Add more custom augments here
+};
 
 function applyCustomAugmentEffects(selectedAugments, augments, finalStats, baseStats, itemBonuses, level) {
   selectedAugments.forEach(index => {
     const aug = augments[index];
     if (aug) {
-      // Find matching custom effect (case-insensitive)
+      // Case-insensitive match
       const customEffect = Object.entries(CUSTOM_AUGMENTS).find(
         ([key]) => key.toLowerCase() === aug.name.toLowerCase()
       );
@@ -145,13 +145,11 @@ function applyCustomAugmentEffects(selectedAugments, augments, finalStats, baseS
 }
 
 function computeFinalStats(base, itemBonuses, augmentBonuses, level, selectedAugments, augments) {
-  // Merge flat bonuses from items and augments
   const totalBonuses = {};
   for (const key in itemBonuses) {
     totalBonuses[key] = (itemBonuses[key] || 0) + (augmentBonuses[key] || 0);
   }
 
-  // Adaptive force
   const adaptive = totalBonuses.adaptiveForce || 0;
   let adBonus = totalBonuses.attackDamage || 0;
   let apBonus = totalBonuses.abilityPower || 0;
@@ -194,7 +192,7 @@ function computeFinalStats(base, itemBonuses, augmentBonuses, level, selectedAug
     slowResist: totalBonuses.slowResist || 0
   };
 
-  // Apply custom augment transformations that override simple arithmetic
+  // Apply custom augment transformations
   if (selectedAugments && augments) {
     applyCustomAugmentEffects(selectedAugments, augments, final, base, itemBonuses, level);
   }

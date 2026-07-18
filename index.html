@@ -520,7 +520,10 @@ function renderItems() {
         const base = StatCalculator.calculateChampionBaseStats(champ, level);
         const itemBonuses = StatCalculator.calculateItemBonuses(state.selectedItems, itemsData);
         const augmentBonuses = StatCalculator.calculateAugmentBonuses(state.selectedAugments, augments);
-        const final = StatCalculator.computeFinalStats(base, itemBonuses, augmentBonuses, level);
+        const final = StatCalculator.computeFinalStats(
+  base, itemBonuses, augmentBonuses, level,
+  state.selectedAugments, augments   // <-- must include both
+);
 
         const isModified = (label) => {
           switch (label) {
