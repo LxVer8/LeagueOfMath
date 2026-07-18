@@ -286,7 +286,7 @@
         const uniqueByName = new Map();
         filteredItems.forEach(([id, item]) => {
           const existing = uniqueByName.get(item.name);
-          if (!existing || item.gold.total > existing.gold.total) {
+          if (!existing || item.gold.total > existing.item.gold.total) {   // FIXED: existing.item.gold.total
             uniqueByName.set(item.name, { id, item });
           }
         });
