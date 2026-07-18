@@ -198,30 +198,49 @@
 
       async function loadData() {
         try {
+          console.log('Fetching version...');
           const versionsRes = await fetch('https://ddragon.leagueoflegends.com/api/versions.json');
           if (!versionsRes.ok) throw new Error('Version fetch failed');
           const versions = await versionsRes.json();
           ddVersion = versions[0];
+          console.log('Latest version:', ddVersion);
+
           const [champsRes, itemsRes] = await Promise.all([
             fetch(`https://ddragon.leagueoflegends.com/cdn/${ddVersion}/data/en_US/champion.json`),
             fetch(`https://ddragon.leagueoflegends.com/cdn/${ddVersion}/data/en_US/item.json`)
           ]);
           if (!champsRes.ok || !itemsRes.ok) throw new Error('Data fetch failed');
+
           championsData = (await champsRes.json()).data;
           itemsData = (await itemsRes.json()).data;
-          try { const augRes = await fetch('augments.json'); if (augRes.ok) augments = await augRes.json(); } catch(e) { augments = []; }
+          console.log(`Loaded ${Object.keys(championsData).length} champions, ${Object.keys(itemsData).length} items.`);
+
+          try {
+            const augRes = await fetch('augments.json');
+            if (augRes.ok) {
+              augments = await augRes.json();
+              console.log(`Loaded ${augments.length} augments from file.`);
+            } else {
+              console.warn('augments.json not found, using empty list');
+            }
+          } catch(e) {
+            console.warn('Could not load augments.json', e);
+            augments = [];
+          }
+
           renderAll();
         } catch (error) {
-          console.error(error);
-          championGrid.innerHTML = '<p style="color:red;">Failed to load.</p>';
-          itemGrid.innerHTML = '<p style="color:red;">Failed to load.</p>';
+          console.error('FATAL load error:', error);
+          championGrid.innerHTML = '<p style="color:red;">Failed to load champions.</p>';
+          itemGrid.innerHTML = '<p style="color:red;">Failed to load items.</p>';
+          augmentGrid.innerHTML = '<p style="color:red;">Failed to load augments.</p>';
         }
       }
 
       function renderAll() {
-        renderChampions();
-        renderItems();
-        renderAugments();
+        try { renderChampions(); } catch(e) { console.error('renderChampions error:', e); }
+        try { renderItems(); } catch(e) { console.error('renderItems error:', e); }
+        try { renderAugments(); } catch(e) { console.error('renderAugments error:', e); }
         updateSelectedItemsBar();
         updateSelectedAugmentsBar();
         calculateStats();
@@ -229,7 +248,12 @@
 
       function renderChampions() {
         championGrid.innerHTML = '';
-        Object.entries(championsData).forEach(([key, champ]) => {
+        const entries = Object.entries(championsData);
+        if (entries.length === 0) {
+          championGrid.innerHTML = '<p style="color:orange;">No champion data found.</p>';
+          return;
+        }
+        entries.forEach(([key, champ]) => {
           const div = document.createElement('div');
           div.className = 'selection-item';
           div.dataset.championKey = key;
@@ -242,23 +266,23 @@
           div.addEventListener('click', () => selectChampion(key, div));
           championGrid.appendChild(div);
         });
+        console.log('Rendered champions:', entries.length);
       }
 
       function renderItems() {
         itemGrid.innerHTML = '';
-
-        // Step 1: filter valid items
+        console.log('Filtering items...');
         const filteredItems = Object.entries(itemsData).filter(([id, item]) => {
           if (!item.gold?.total || item.gold.total <= 0) return false;
           if (item.tags && (item.tags.includes('Trinket') || item.tags.includes('Consumable') || item.tags.includes('GoldPer'))) return false;
           if (!item.maps || (!item.maps['11'] && !item.maps['21'])) return false;
-          if (item.tags && item.tags.includes('Jungle')) return false;  // remove jungle pets
-          if (/doran/i.test(item.name)) return false;                   // remove Doran's items
-          if (item.into && item.into.length > 0) return false;          // remove component items
+          if (item.tags && item.tags.includes('Jungle')) return false;
+          if (/doran/i.test(item.name)) return false;
+          if (item.into && item.into.length > 0) return false;
           return true;
         });
+        console.log('Items after filtering:', filteredItems.length);
 
-        // Step 2: deduplicate by name, keep highest gold
         const uniqueByName = new Map();
         filteredItems.forEach(([id, item]) => {
           const existing = uniqueByName.get(item.name);
@@ -266,15 +290,19 @@
             uniqueByName.set(item.name, { id, item });
           }
         });
+        console.log('Unique items after dedup:', uniqueByName.size);
 
-        // Step 3: clean up selected items
         const filteredIds = new Set(Array.from(uniqueByName.values()).map(v => v.id));
         for (const id of state.selectedItems) {
           if (!filteredIds.has(id)) state.selectedItems.delete(id);
         }
         updateSelectedItemsBar();
 
-        // Step 4: render
+        if (uniqueByName.size === 0) {
+          itemGrid.innerHTML = '<p style="color:orange;">No items match the current filters.</p>';
+          return;
+        }
+
         uniqueByName.forEach(({ id, item }) => {
           const div = document.createElement('div');
           div.className = 'selection-item';
@@ -299,12 +327,13 @@
 
           itemGrid.appendChild(div);
         });
+        console.log('Rendered items successfully.');
       }
 
       function renderAugments() {
         augmentGrid.innerHTML = '';
         if (augments.length === 0) {
-          augmentGrid.innerHTML = '<p style="color:orange;">No augment data.</p>';
+          augmentGrid.innerHTML = '<p style="color:orange;">No augment data. Run the scraper to get augments.json.</p>';
           return;
         }
         augments.forEach((aug, idx) => {
@@ -337,6 +366,7 @@
 
           augmentGrid.appendChild(div);
         });
+        console.log('Rendered augments:', augments.length);
       }
 
       function getColor(i) { return ['#3c5a77','#5e4b3c','#2e5a4b','#6b4e5a','#4a6e5f'][i%5]; }
