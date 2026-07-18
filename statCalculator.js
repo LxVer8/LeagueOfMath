@@ -114,12 +114,42 @@ function calculateAugmentBonuses(selectedAugments, augments) {
   return bonuses;
 }
 
-function computeFinalStats(base, itemBonuses, augmentBonuses, level) {
+// ----- CUSTOM AUGMENT EFFECTS -----
+// Each entry is a function that directly modifies the final stats object.
+// Parameters: (finalStats, baseStats, itemBonuses, level)
+const CUSTOM_AUGMENTS = {
+  'ADAPt': (final, base) => {
+    // Exact ADAPt logic:
+    // 1. Remove all bonus AD, convert to AP at 1.67 AP per 1 bonus AD.
+    // 2. Increase total AP by 10%.
+    const bonusAD = final.attackDamage - base.attackDamage;
+    if (bonusAD > 0) {
+      final.attackDamage = base.attackDamage;      // remove bonus AD
+      final.abilityPower += bonusAD * 1.67;        // add converted AP
+    }
+    final.abilityPower *= 1.10;                     // +10% total AP
+  },
+  // Add more complex augments here, e.g.:
+  // 'Augment Name': (final, base, items, level) => { ... }
+};
+
+function applyCustomAugmentEffects(selectedAugments, augments, finalStats, baseStats, itemBonuses, level) {
+  selectedAugments.forEach(index => {
+    const aug = augments[index];
+    if (aug && CUSTOM_AUGMENTS[aug.name]) {
+      CUSTOM_AUGMENTS[aug.name](finalStats, baseStats, itemBonuses, level);
+    }
+  });
+}
+
+function computeFinalStats(base, itemBonuses, augmentBonuses, level, selectedAugments, augments) {
+  // Merge flat bonuses from items and augments
   const totalBonuses = {};
   for (const key in itemBonuses) {
     totalBonuses[key] = (itemBonuses[key] || 0) + (augmentBonuses[key] || 0);
   }
 
+  // Adaptive force
   const adaptive = totalBonuses.adaptiveForce || 0;
   let adBonus = totalBonuses.attackDamage || 0;
   let apBonus = totalBonuses.abilityPower || 0;
@@ -134,7 +164,7 @@ function computeFinalStats(base, itemBonuses, augmentBonuses, level) {
   const asBonus = totalBonuses.attackSpeedPercent || 0;
   const totalAS = asBase * (1 + asPerLevel * (level - 1) + asBonus);
 
-  return {
+  const final = {
     health: base.health + (totalBonuses.health || 0),
     mana: base.mana + (totalBonuses.mana || 0),
     healthRegen5: ((base.healthRegen || 0) + (totalBonuses.healthRegenFlat || 0)) * 5,
@@ -161,6 +191,13 @@ function computeFinalStats(base, itemBonuses, augmentBonuses, level) {
     tenacity: totalBonuses.tenacity || 0,
     slowResist: totalBonuses.slowResist || 0
   };
+
+  // Apply custom augment transformations that override simple arithmetic
+  if (selectedAugments && augments) {
+    applyCustomAugmentEffects(selectedAugments, augments, final, base, itemBonuses, level);
+  }
+
+  return final;
 }
 
 window.StatCalculator = {
