@@ -270,18 +270,31 @@
 function renderItems() {
   itemGrid.innerHTML = '';
 
-  // Step 1: filter valid items (gold cost, not trinket/consumable, only Rift/Arena)
+  // Step 1: filter valid items
   const filteredItems = Object.entries(itemsData)
     .filter(([id, item]) => {
+      // Must have a gold cost and be purchasable
       if (!item.gold?.total || item.gold.total <= 0) return false;
+
+      // Exclude trinkets, consumables, gold‑per‑second items
       if (item.tags && (item.tags.includes('Trinket') || item.tags.includes('Consumable') || item.tags.includes('GoldPer'))) return false;
-      if (item.maps) {
-        return item.maps['11'] || item.maps['21'];   // Summoner's Rift or Arena
-      }
-      return false;
+
+      // Only keep items available on Summoner's Rift (11) or Arena (21)
+      if (!item.maps || (!item.maps['11'] && !item.maps['21'])) return false;
+
+      // Remove jungle pet items
+      if (item.tags && item.tags.includes('Jungle')) return false;
+
+      // Remove Doran's items (by name pattern)
+      if (/doran/i.test(item.name)) return false;
+
+      // Remove component items (anything that builds into another item)
+      if (item.into && item.into.length > 0) return false;
+
+      return true;
     });
 
-  // Step 2: deduplicate by item name, keeping the entry with the highest total gold
+  // Step 2: deduplicate by item name, keeping the one with the highest total gold
   const uniqueByName = new Map();
   filteredItems.forEach(([id, item]) => {
     const existing = uniqueByName.get(item.name);
