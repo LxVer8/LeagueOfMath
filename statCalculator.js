@@ -118,26 +118,28 @@ function calculateAugmentBonuses(selectedAugments, augments) {
 // Each entry is a function that directly modifies the final stats object.
 // Parameters: (finalStats, baseStats, itemBonuses, level)
 const CUSTOM_AUGMENTS = {
-  'ADAPt': (final, base) => {
-    // Exact ADAPt logic:
-    // 1. Remove all bonus AD, convert to AP at 1.67 AP per 1 bonus AD.
-    // 2. Increase total AP by 10%.
-    const bonusAD = final.attackDamage - base.attackDamage;
-    if (bonusAD > 0) {
-      final.attackDamage = base.attackDamage;      // remove bonus AD
-      final.abilityPower += bonusAD * 1.67;        // add converted AP
-    }
-    final.abilityPower *= 1.10;                     // +10% total AP
-  },
-  // Add more complex augments here, e.g.:
-  // 'Augment Name': (final, base, items, level) => { ... }
-};
+'ADAPt': (final, base) => {
+  const bonusAD = final.attackDamage - base.attackDamage;
+  console.log('ADAPt triggered! Bonus AD:', bonusAD);
+  if (bonusAD > 0) {
+    final.attackDamage = base.attackDamage;
+    final.abilityPower += bonusAD * 1.67;
+  }
+  final.abilityPower *= 1.10;
+  console.log('Final AD:', final.attackDamage, 'Final AP:', final.abilityPower);
+}
 
 function applyCustomAugmentEffects(selectedAugments, augments, finalStats, baseStats, itemBonuses, level) {
   selectedAugments.forEach(index => {
     const aug = augments[index];
-    if (aug && CUSTOM_AUGMENTS[aug.name]) {
-      CUSTOM_AUGMENTS[aug.name](finalStats, baseStats, itemBonuses, level);
+    if (aug) {
+      // Find matching custom effect (case-insensitive)
+      const customEffect = Object.entries(CUSTOM_AUGMENTS).find(
+        ([key]) => key.toLowerCase() === aug.name.toLowerCase()
+      );
+      if (customEffect) {
+        customEffect[1](finalStats, baseStats, itemBonuses, level);
+      }
     }
   });
 }

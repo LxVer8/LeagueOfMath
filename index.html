@@ -221,6 +221,7 @@ try {
     augments = await augRes.json();
     // Filter out garbage entries (blank names, numeric names, missing descriptions)
     augments = augments.filter(aug => {
+      window.augments = augments;   // expose globally for console
       if (!aug.name || !isNaN(Number(aug.name))) return false;
       if (!aug.desc || aug.desc.trim().length < 5) return false;
       return true;
