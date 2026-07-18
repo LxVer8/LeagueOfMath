@@ -267,39 +267,50 @@
         });
       }
 
-      function renderItems() {
-        itemGrid.innerHTML = '';
-        Object.entries(itemsData)
-          .filter(([id, item]) => item.gold?.total > 0 && !(item.tags || []).some(t => ['Trinket','Consumable','GoldPer'].includes(t)))
-          .forEach(([id, item]) => {
-            const div = document.createElement('div');
-            div.className = 'selection-item';
-            div.dataset.itemId = id;
-            const img = document.createElement('img');
-            img.src = `https://ddragon.leagueoflegends.com/cdn/${ddVersion}/img/item/${id}.png`;
-            img.alt = item.name;
-            img.onerror = () => { img.remove(); div.textContent = item.name.charAt(0); };
-            div.appendChild(img);
-
-            const tooltip = document.createElement('span');
-            tooltip.className = 'tooltip';
-            const descriptionHTML = item.description || '';
-            tooltip.innerHTML = `<strong>${item.name}</strong>${descriptionHTML}`;
-            div.appendChild(tooltip);
-
-            if (state.selectedItems.has(id)) div.classList.add('selected');
-            div.addEventListener('click', () => toggleItem(id, div));
-
-            div.addEventListener('mouseenter', () => {
-              positionTooltip(tooltip, div, itemGrid);
-            });
-            div.addEventListener('mouseleave', () => {
-              resetTooltip(tooltip);
-            });
-
-            itemGrid.appendChild(div);
-          });
+function renderItems() {
+  itemGrid.innerHTML = '';
+  Object.entries(itemsData)
+    .filter(([id, item]) => {
+      // Must have a gold cost and be purchasable
+      if (!item.gold?.total || item.gold.total <= 0) return false;
+      // Exclude trinkets, consumables, gold‑per‑second items
+      if (item.tags && (item.tags.includes('Trinket') || item.tags.includes('Consumable') || item.tags.includes('GoldPer'))) return false;
+      // Only keep items available on Summoner's Rift (11) or Arena (21)
+      if (item.maps) {
+        return item.maps['11'] || item.maps['21'];
       }
+      // If no maps information, exclude to be safe
+      return false;
+    })
+    .forEach(([id, item]) => {
+      const div = document.createElement('div');
+      div.className = 'selection-item';
+      div.dataset.itemId = id;
+      const img = document.createElement('img');
+      img.src = `https://ddragon.leagueoflegends.com/cdn/${ddVersion}/img/item/${id}.png`;
+      img.alt = item.name;
+      img.onerror = () => { img.remove(); div.textContent = item.name.charAt(0); };
+      div.appendChild(img);
+
+      const tooltip = document.createElement('span');
+      tooltip.className = 'tooltip';
+      const descriptionHTML = item.description || '';
+      tooltip.innerHTML = `<strong>${item.name}</strong>${descriptionHTML}`;
+      div.appendChild(tooltip);
+
+      if (state.selectedItems.has(id)) div.classList.add('selected');
+      div.addEventListener('click', () => toggleItem(id, div));
+
+      div.addEventListener('mouseenter', () => {
+        positionTooltip(tooltip, div, itemGrid);
+      });
+      div.addEventListener('mouseleave', () => {
+        resetTooltip(tooltip);
+      });
+
+      itemGrid.appendChild(div);
+    });
+}
 
       function renderAugments() {
         augmentGrid.innerHTML = '';
