@@ -1,8 +1,14 @@
 // statCalculator.js
 
 function getChampionBaseStat(champData, level, baseKey, growthKey) {
+  const base = champData.stats[baseKey];
+  const growth = champData.stats[growthKey] || 0;   // fallback if growth is missing
+  console.log(`Champion: ${champData.id}, Stat: ${baseKey}, Base: ${base}, Growth: ${growth}, Level: ${level}`);
   const g = level - 1;
-  return champData.stats[baseKey] + champData.stats[growthKey] * g * (0.7025 + 0.0175 * g);
+  const factor = 0.7025 + 0.0175 * g;
+  const value = base + growth * g * factor;
+  console.log(`Calculated value: ${value}`);
+  return value;
 }
 
 function calculateChampionBaseStats(champData, level) {
@@ -126,14 +132,12 @@ const CUSTOM_AUGMENTS = {
     final.abilityPower *= 1.10;
     console.log('Final AD:', final.attackDamage, 'Final AP:', final.abilityPower);
   }
-  // Add more custom augments here
 };
 
 function applyCustomAugmentEffects(selectedAugments, augments, finalStats, baseStats, itemBonuses, level) {
   selectedAugments.forEach(index => {
     const aug = augments[index];
     if (aug) {
-      // Case-insensitive match
       const customEffect = Object.entries(CUSTOM_AUGMENTS).find(
         ([key]) => key.toLowerCase() === aug.name.toLowerCase()
       );
@@ -192,7 +196,6 @@ function computeFinalStats(base, itemBonuses, augmentBonuses, level, selectedAug
     slowResist: totalBonuses.slowResist || 0
   };
 
-  // Apply custom augment transformations
   if (selectedAugments && augments) {
     applyCustomAugmentEffects(selectedAugments, augments, final, base, itemBonuses, level);
   }
