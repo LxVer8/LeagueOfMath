@@ -269,47 +269,65 @@
 
 function renderItems() {
   itemGrid.innerHTML = '';
-  Object.entries(itemsData)
+
+  // Step 1: filter valid items (gold cost, not trinket/consumable, only Rift/Arena)
+  const filteredItems = Object.entries(itemsData)
     .filter(([id, item]) => {
-      // Must have a gold cost and be purchasable
       if (!item.gold?.total || item.gold.total <= 0) return false;
-      // Exclude trinkets, consumables, gold‑per‑second items
       if (item.tags && (item.tags.includes('Trinket') || item.tags.includes('Consumable') || item.tags.includes('GoldPer'))) return false;
-      // Only keep items available on Summoner's Rift (11) or Arena (21)
       if (item.maps) {
-        return item.maps['11'] || item.maps['21'];
+        return item.maps['11'] || item.maps['21'];   // Summoner's Rift or Arena
       }
-      // If no maps information, exclude to be safe
       return false;
-    })
-    .forEach(([id, item]) => {
-      const div = document.createElement('div');
-      div.className = 'selection-item';
-      div.dataset.itemId = id;
-      const img = document.createElement('img');
-      img.src = `https://ddragon.leagueoflegends.com/cdn/${ddVersion}/img/item/${id}.png`;
-      img.alt = item.name;
-      img.onerror = () => { img.remove(); div.textContent = item.name.charAt(0); };
-      div.appendChild(img);
-
-      const tooltip = document.createElement('span');
-      tooltip.className = 'tooltip';
-      const descriptionHTML = item.description || '';
-      tooltip.innerHTML = `<strong>${item.name}</strong>${descriptionHTML}`;
-      div.appendChild(tooltip);
-
-      if (state.selectedItems.has(id)) div.classList.add('selected');
-      div.addEventListener('click', () => toggleItem(id, div));
-
-      div.addEventListener('mouseenter', () => {
-        positionTooltip(tooltip, div, itemGrid);
-      });
-      div.addEventListener('mouseleave', () => {
-        resetTooltip(tooltip);
-      });
-
-      itemGrid.appendChild(div);
     });
+
+  // Step 2: deduplicate by item name, keeping the entry with the highest total gold
+  const uniqueByName = new Map();
+  filteredItems.forEach(([id, item]) => {
+    const existing = uniqueByName.get(item.name);
+    if (!existing || item.gold.total > existing.gold.total) {
+      uniqueByName.set(item.name, { id, item });
+    }
+  });
+
+  // Step 3: remove any selected items whose ID no longer exists
+  const filteredIds = new Set(Array.from(uniqueByName.values()).map(v => v.id));
+  for (const id of state.selectedItems) {
+    if (!filteredIds.has(id)) {
+      state.selectedItems.delete(id);
+    }
+  }
+  updateSelectedItemsBar();
+
+  // Step 4: render the remaining items
+  uniqueByName.forEach(({ id, item }) => {
+    const div = document.createElement('div');
+    div.className = 'selection-item';
+    div.dataset.itemId = id;
+    const img = document.createElement('img');
+    img.src = `https://ddragon.leagueoflegends.com/cdn/${ddVersion}/img/item/${id}.png`;
+    img.alt = item.name;
+    img.onerror = () => { img.remove(); div.textContent = item.name.charAt(0); };
+    div.appendChild(img);
+
+    const tooltip = document.createElement('span');
+    tooltip.className = 'tooltip';
+    const descriptionHTML = item.description || '';
+    tooltip.innerHTML = `<strong>${item.name}</strong>${descriptionHTML}`;
+    div.appendChild(tooltip);
+
+    if (state.selectedItems.has(id)) div.classList.add('selected');
+    div.addEventListener('click', () => toggleItem(id, div));
+
+    div.addEventListener('mouseenter', () => {
+      positionTooltip(tooltip, div, itemGrid);
+    });
+    div.addEventListener('mouseleave', () => {
+      resetTooltip(tooltip);
+    });
+
+    itemGrid.appendChild(div);
+  });
 }
 
       function renderAugments() {
