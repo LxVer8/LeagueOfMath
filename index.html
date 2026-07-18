@@ -215,18 +215,24 @@
           itemsData = (await itemsRes.json()).data;
           console.log(`Loaded ${Object.keys(championsData).length} champions, ${Object.keys(itemsData).length} items.`);
 
-          try {
-            const augRes = await fetch('augments.json');
-            if (augRes.ok) {
-              augments = await augRes.json();
-              console.log(`Loaded ${augments.length} augments from file.`);
-            } else {
-              console.warn('augments.json not found, using empty list');
-            }
-          } catch(e) {
-            console.warn('Could not load augments.json', e);
-            augments = [];
-          }
+try {
+  const augRes = await fetch('augments.json');
+  if (augRes.ok) {
+    augments = await augRes.json();
+    // Filter out garbage entries (blank names, numeric names, missing descriptions)
+    augments = augments.filter(aug => {
+      if (!aug.name || !isNaN(Number(aug.name))) return false;
+      if (!aug.desc || aug.desc.trim().length < 5) return false;
+      return true;
+    });
+    console.log(`Loaded ${augments.length} augments from file.`);
+  } else {
+    console.warn('augments.json not found, using empty list');
+  }
+} catch(e) {
+  console.warn('Could not load augments.json', e);
+  augments = [];
+}
 
           renderAll();
         } catch (error) {
