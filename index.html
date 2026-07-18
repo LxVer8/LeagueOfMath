@@ -20,7 +20,6 @@
     .selection-item.selected { border-color: #f0e6d2; background: rgba(200, 170, 110, 0.25); }
     .selection-item img { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; }
 
-    /* Tooltip */
     .tooltip {
       display: none;
       position: absolute;
@@ -51,25 +50,13 @@
       font-weight: 700;
     }
 
-    /* In-game item tooltip colours */
     .tooltip stats,
-    .tooltip attention {
-      color: #c8aa6e;
-    }
+    .tooltip attention { color: #c8aa6e; }
     .tooltip passive,
-    .tooltip active {
-      color: #ffffff;
-      display: block;
-      margin-top: 2px;
-    }
+    .tooltip active { color: #ffffff; display: block; margin-top: 2px; }
     .tooltip passiveName,
-    .tooltip activeName {
-      color: #ffffff;
-      font-weight: bold;
-    }
-    .tooltip rarity {
-      color: #9370db;
-    }
+    .tooltip activeName { color: #ffffff; font-weight: bold; }
+    .tooltip rarity { color: #9370db; }
 
     .search-input { width: 100%; padding: 6px 10px; margin-bottom: 8px; background: #2a2e38; border: 1px solid #444; border-radius: 4px; color: #e0e0e0; font-size: 0.85rem; outline: none; }
     .search-input::placeholder { color: #888; }
@@ -125,9 +112,7 @@
     </div>
   </div>
 
-  <!-- External stat calculator -->
   <script src="statCalculator.js"></script>
-
   <script>
     (function() {
       const state = { selectedChampion: null, selectedItems: new Set(), selectedAugments: new Set(), level: 1 };
@@ -173,24 +158,18 @@
         'Slow Resist': 'https://wiki.leagueoflegends.com/en-us/images/thumb/Slow_immune_icon.png/15px-Slow_immune_icon.png?4ad41'
       };
 
-      // --- Smart tooltip positioning ---
       function positionTooltip(tooltip, icon, grid) {
         tooltip.style.display = 'block';
         tooltip.style.visibility = 'hidden';
         const tooltipRect = tooltip.getBoundingClientRect();
         const gridRect = grid.getBoundingClientRect();
         const iconRect = icon.getBoundingClientRect();
-
         const padding = 4;
         const tooltipWidth = tooltipRect.width;
         const tooltipHeight = tooltipRect.height;
-
         let placeAbove = true;
         const spaceAbove = iconRect.top - gridRect.top;
-        if (spaceAbove < tooltipHeight + padding) {
-          placeAbove = false;
-        }
-
+        if (spaceAbove < tooltipHeight + padding) placeAbove = false;
         if (placeAbove) {
           tooltip.style.top = 'auto';
           tooltip.style.bottom = '110%';
@@ -198,13 +177,11 @@
           tooltip.style.bottom = 'auto';
           tooltip.style.top = '110%';
         }
-
         let left = iconRect.left + iconRect.width / 2 - tooltipWidth / 2;
         const minLeft = gridRect.left + padding;
         const maxLeft = gridRect.right - tooltipWidth - padding;
         if (left < minLeft) left = minLeft;
         if (left > maxLeft) left = maxLeft;
-
         tooltip.style.left = (left - iconRect.left) + 'px';
         tooltip.style.transform = 'none';
         tooltip.style.visibility = 'visible';
@@ -267,81 +244,62 @@
         });
       }
 
-function renderItems() {
-  itemGrid.innerHTML = '';
+      function renderItems() {
+        itemGrid.innerHTML = '';
 
-  // Step 1: filter valid items
-  const filteredItems = Object.entries(itemsData)
-    .filter(([id, item]) => {
-      // Must have a gold cost and be purchasable
-      if (!item.gold?.total || item.gold.total <= 0) return false;
+        // Step 1: filter valid items
+        const filteredItems = Object.entries(itemsData).filter(([id, item]) => {
+          if (!item.gold?.total || item.gold.total <= 0) return false;
+          if (item.tags && (item.tags.includes('Trinket') || item.tags.includes('Consumable') || item.tags.includes('GoldPer'))) return false;
+          if (!item.maps || (!item.maps['11'] && !item.maps['21'])) return false;
+          if (item.tags && item.tags.includes('Jungle')) return false;  // remove jungle pets
+          if (/doran/i.test(item.name)) return false;                   // remove Doran's items
+          if (item.into && item.into.length > 0) return false;          // remove component items
+          return true;
+        });
 
-      // Exclude trinkets, consumables, gold‑per‑second items
-      if (item.tags && (item.tags.includes('Trinket') || item.tags.includes('Consumable') || item.tags.includes('GoldPer'))) return false;
+        // Step 2: deduplicate by name, keep highest gold
+        const uniqueByName = new Map();
+        filteredItems.forEach(([id, item]) => {
+          const existing = uniqueByName.get(item.name);
+          if (!existing || item.gold.total > existing.gold.total) {
+            uniqueByName.set(item.name, { id, item });
+          }
+        });
 
-      // Only keep items available on Summoner's Rift (11) or Arena (21)
-      if (!item.maps || (!item.maps['11'] && !item.maps['21'])) return false;
+        // Step 3: clean up selected items
+        const filteredIds = new Set(Array.from(uniqueByName.values()).map(v => v.id));
+        for (const id of state.selectedItems) {
+          if (!filteredIds.has(id)) state.selectedItems.delete(id);
+        }
+        updateSelectedItemsBar();
 
-      // Remove jungle pet items
-      if (item.tags && item.tags.includes('Jungle')) return false;
+        // Step 4: render
+        uniqueByName.forEach(({ id, item }) => {
+          const div = document.createElement('div');
+          div.className = 'selection-item';
+          div.dataset.itemId = id;
+          const img = document.createElement('img');
+          img.src = `https://ddragon.leagueoflegends.com/cdn/${ddVersion}/img/item/${id}.png`;
+          img.alt = item.name;
+          img.onerror = () => { img.remove(); div.textContent = item.name.charAt(0); };
+          div.appendChild(img);
 
-      // Remove Doran's items (by name pattern)
-      if (/doran/i.test(item.name)) return false;
+          const tooltip = document.createElement('span');
+          tooltip.className = 'tooltip';
+          const descriptionHTML = item.description || '';
+          tooltip.innerHTML = `<strong>${item.name}</strong>${descriptionHTML}`;
+          div.appendChild(tooltip);
 
-      // Remove component items (anything that builds into another item)
-      if (item.into && item.into.length > 0) return false;
+          if (state.selectedItems.has(id)) div.classList.add('selected');
+          div.addEventListener('click', () => toggleItem(id, div));
 
-      return true;
-    });
+          div.addEventListener('mouseenter', () => positionTooltip(tooltip, div, itemGrid));
+          div.addEventListener('mouseleave', () => resetTooltip(tooltip));
 
-  // Step 2: deduplicate by item name, keeping the one with the highest total gold
-  const uniqueByName = new Map();
-  filteredItems.forEach(([id, item]) => {
-    const existing = uniqueByName.get(item.name);
-    if (!existing || item.gold.total > existing.gold.total) {
-      uniqueByName.set(item.name, { id, item });
-    }
-  });
-
-  // Step 3: remove any selected items whose ID no longer exists
-  const filteredIds = new Set(Array.from(uniqueByName.values()).map(v => v.id));
-  for (const id of state.selectedItems) {
-    if (!filteredIds.has(id)) {
-      state.selectedItems.delete(id);
-    }
-  }
-  updateSelectedItemsBar();
-
-  // Step 4: render the remaining items
-  uniqueByName.forEach(({ id, item }) => {
-    const div = document.createElement('div');
-    div.className = 'selection-item';
-    div.dataset.itemId = id;
-    const img = document.createElement('img');
-    img.src = `https://ddragon.leagueoflegends.com/cdn/${ddVersion}/img/item/${id}.png`;
-    img.alt = item.name;
-    img.onerror = () => { img.remove(); div.textContent = item.name.charAt(0); };
-    div.appendChild(img);
-
-    const tooltip = document.createElement('span');
-    tooltip.className = 'tooltip';
-    const descriptionHTML = item.description || '';
-    tooltip.innerHTML = `<strong>${item.name}</strong>${descriptionHTML}`;
-    div.appendChild(tooltip);
-
-    if (state.selectedItems.has(id)) div.classList.add('selected');
-    div.addEventListener('click', () => toggleItem(id, div));
-
-    div.addEventListener('mouseenter', () => {
-      positionTooltip(tooltip, div, itemGrid);
-    });
-    div.addEventListener('mouseleave', () => {
-      resetTooltip(tooltip);
-    });
-
-    itemGrid.appendChild(div);
-  });
-}
+          itemGrid.appendChild(div);
+        });
+      }
 
       function renderAugments() {
         augmentGrid.innerHTML = '';
@@ -374,12 +332,8 @@ function renderItems() {
           if (state.selectedAugments.has(idx)) div.classList.add('selected');
           div.addEventListener('click', () => toggleAugment(idx, div));
 
-          div.addEventListener('mouseenter', () => {
-            positionTooltip(tooltip, div, augmentGrid);
-          });
-          div.addEventListener('mouseleave', () => {
-            resetTooltip(tooltip);
-          });
+          div.addEventListener('mouseenter', () => positionTooltip(tooltip, div, augmentGrid));
+          div.addEventListener('mouseleave', () => resetTooltip(tooltip));
 
           augmentGrid.appendChild(div);
         });
@@ -495,7 +449,6 @@ function renderItems() {
       });
       levelInput.addEventListener('input', () => { state.level = parseInt(levelInput.value) || 1; calculateStats(); });
 
-      // --- Stat Calculation (using external module) ---
       function calculateStats() {
         if (!state.selectedChampion || !championsData[state.selectedChampion]) {
           statsTable.innerHTML = '<tr><td colspan="2">Select a champion</td></tr>';
@@ -504,14 +457,11 @@ function renderItems() {
 
         const champ = championsData[state.selectedChampion];
         const level = state.level;
-
-        // Use external calculator
         const base = StatCalculator.calculateChampionBaseStats(champ, level);
         const itemBonuses = StatCalculator.calculateItemBonuses(state.selectedItems, itemsData);
         const augmentBonuses = StatCalculator.calculateAugmentBonuses(state.selectedAugments, augments);
         const final = StatCalculator.computeFinalStats(base, itemBonuses, augmentBonuses, level);
 
-        // Yellow highlight logic
         const isModified = (label) => {
           switch (label) {
             case 'Health': return final.health !== base.health;
@@ -548,17 +498,13 @@ function renderItems() {
         const rows = [];
         function addRow(label, value, formatter, modified) {
           const iconUrl = statIcons[label] || '';
-          const iconHTML = iconUrl
-            ? `<img class="stat-icon" src="${iconUrl}" alt="${label}" onerror="this.style.display='none';">`
-            : '';
-
+          const iconHTML = iconUrl ? `<img class="stat-icon" src="${iconUrl}" alt="${label}" onerror="this.style.display='none';">` : '';
           let display;
           if (formatter === 'percent') display = (value * 100).toFixed(1) + '%';
           else if (formatter === 'as') display = value.toFixed(3);
           else if (formatter === 'integer') display = Math.round(value);
           else if (formatter === 'flat') display = Math.round(value);
           else display = value;
-
           const modClass = modified ? ' class="modified"' : '';
           rows.push(`<tr><td>${iconHTML} ${label}</td><td${modClass}>${display}</td></tr>`);
         }
