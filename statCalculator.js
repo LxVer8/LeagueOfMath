@@ -1,61 +1,95 @@
 // statCalculator.js
 
-function getChampionBaseStat(champData, level, baseKey, growthKey) {
-  const base = champData.stats[baseKey];
-  const growth = champData.stats[growthKey] || 0;   // fallback if growth is missing
-  console.log(`Champion: ${champData.id}, Stat: ${baseKey}, Base: ${base}, Growth: ${growth}, Level: ${level}`);
-  const g = level - 1;
-  const factor = 0.7025 + 0.0175 * g;
-  const value = base + growth * g * factor;
-  console.log(`Calculated value: ${value}`);
-  return value;
+// ============================
+//  CHAMPION BASE STATS
+// ============================
+
+/**
+ * Computes a base stat at a given level using the correct League of Legends scaling curves.
+ * @param {number} base - Base value at level 1.
+ * @param {number} growth - Growth per level.
+ * @param {number} g - (level - 1)
+ * @param {string} factorType - 'hp_ad', 'mana', 'regen', or 'linear'
+ * @returns {number}
+ */
+function getScaledStat(base, growth, g, factorType) {
+  if (factorType === 'linear') {
+    return base + growth * g;
+  }
+  let f;
+  switch (factorType) {
+    case 'hp_ad':       f = 0.685 + 0.0175 * g; break;
+    case 'mana':        f = 0.5   + 0.025  * g; break;
+    case 'regen':       f = 0.75  + 0.025  * g; break;
+    default:            f = 0.685 + 0.0175 * g; // fallback
+  }
+  return base + growth * g * f;
 }
 
+/**
+ * Returns the base stats of a champion at the given level.
+ * @param {object} champData - Champion object from Data Dragon.
+ * @param {number} level - 1–18
+ * @returns {object}
+ */
 function calculateChampionBaseStats(champData, level) {
+  const g = level - 1;
+  const stats = champData.stats;
   return {
-    health: getChampionBaseStat(champData, level, 'hp', 'hpperlevel'),
-    mana: getChampionBaseStat(champData, level, 'mp', 'mpperlevel'),
-    armor: getChampionBaseStat(champData, level, 'armor', 'armorperlevel'),
-    magicResistance: getChampionBaseStat(champData, level, 'spellblock', 'spellblockperlevel'),
-    attackDamage: getChampionBaseStat(champData, level, 'attackdamage', 'attackdamageperlevel'),
-    abilityPower: 0,
-    healthRegen: getChampionBaseStat(champData, level, 'hpregen', 'hpregenperlevel'),
-    manaRegen: getChampionBaseStat(champData, level, 'mpregen', 'mpregenperlevel'),
-    attackSpeed: champData.stats.attackspeed,
-    attackSpeedPerLevel: champData.stats.attackspeedperlevel / 100,
-    moveSpeed: champData.stats.movespeed
+    health:           getScaledStat(stats.hp,             stats.hpperlevel,             g, 'hp_ad'),
+    mana:             getScaledStat(stats.mp,             stats.mpperlevel,             g, 'mana'),
+    armor:            getScaledStat(stats.armor,          stats.armorperlevel,          g, 'linear'),
+    magicResistance:  getScaledStat(stats.spellblock,     stats.spellblockperlevel,     g, 'linear'),
+    attackDamage:     getScaledStat(stats.attackdamage,   stats.attackdamageperlevel,   g, 'hp_ad'),
+    healthRegen:      getScaledStat(stats.hpregen,        stats.hpregenperlevel,        g, 'regen'),
+    manaRegen:        getScaledStat(stats.mpregen,        stats.mpregenperlevel,        g, 'regen'),
+    attackSpeed:      stats.attackspeed,                           // base AS at level 1
+    attackSpeedPerLevel: stats.attackspeedperlevel / 100,          // ratio per level
+    moveSpeed:        stats.movespeed,
+    abilityPower:     0
   };
 }
 
+// ============================
+//  ITEM STAT MAPPING
+// ============================
+
+// CommunityDragon stat names → internal keys
 const itemStatMap = {
-  FlatHPPoolMod: 'health',
-  FlatMPPoolMod: 'mana',
-  FlatArmorMod: 'armor',
-  FlatSpellBlockMod: 'magicResistance',
-  FlatPhysicalDamageMod: 'attackDamage',
-  FlatMagicDamageMod: 'abilityPower',
-  FlatHPRegenMod: 'healthRegenFlat',
-  FlatMPRegenMod: 'manaRegenFlat',
-  PercentAttackSpeedMod: 'attackSpeedPercent',
-  AbilityHaste: 'abilityHaste',
-  CritChance: 'critChance',
-  Lethality: 'lethality',
-  FlatMagicPenetration: 'flatMagicPen',
-  PercentMagicPenetration: 'percentMagicPen',
-  FlatArmorPenetration: 'flatArmorPen',
-  PercentArmorPenetration: 'percentArmorPen',
-  HealAndShieldPower: 'healShieldPower',
-  PercentLifeStealMod: 'lifeSteal',
-  SpellVamp: 'spellVamp',
-  Omnivamp: 'omnivamp',
-  FlatMovementSpeedMod: 'moveSpeedFlat',
-  PercentMovementSpeedMod: 'moveSpeedPercent',
-  AttackRange: 'attackRange',
-  Tenacity: 'tenacity',
-  SlowResist: 'slowResist'
+  FlatHPPoolMod:              'health',
+  FlatMPPoolMod:              'mana',
+  FlatArmorMod:               'armor',
+  FlatSpellBlockMod:          'magicResistance',
+  FlatPhysicalDamageMod:      'attackDamage',
+  FlatMagicDamageMod:         'abilityPower',
+  FlatHPRegenMod:             'healthRegenFlat',
+  FlatMPRegenMod:             'manaRegenFlat',
+  PercentAttackSpeedMod:      'attackSpeedPercent',
+  AbilityHaste:               'abilityHaste',
+  CritChance:                 'critChance',
+  Lethality:                  'lethality',
+  FlatMagicPenetration:       'flatMagicPen',
+  PercentMagicPenetration:    'percentMagicPen',
+  FlatArmorPenetration:       'flatArmorPen',
+  PercentArmorPenetration:    'percentArmorPen',
+  HealAndShieldPower:         'healShieldPower',
+  PercentLifeStealMod:        'lifeSteal',
+  SpellVamp:                  'spellVamp',
+  Omnivamp:                   'omnivamp',
+  FlatMovementSpeedMod:       'moveSpeedFlat',
+  PercentMovementSpeedMod:    'moveSpeedPercent',
+  AttackRange:                'attackRange',
+  Tenacity:                   'tenacity',
+  SlowResist:                 'slowResist'
 };
 
-function calculateItemBonuses(selectedItems, itemsData) {
+/**
+ * Sums up stat bonuses from selected items using CommunityDragon data.
+ * @param {Set<number|string>} selectedItems - Set of item IDs.
+ * @param {object} itemStatsData - Map of item ID → { statName: value } (from CDragon)
+ * @returns {object}
+ */
+function calculateItemBonuses(selectedItems, itemStatsData) {
   const bonuses = {
     health: 0, mana: 0, armor: 0, magicResistance: 0,
     attackDamage: 0, abilityPower: 0,
@@ -75,9 +109,9 @@ function calculateItemBonuses(selectedItems, itemsData) {
   };
 
   selectedItems.forEach(id => {
-    const item = itemsData[id];
-    if (!item?.stats) return;
-    for (const [key, val] of Object.entries(item.stats)) {
+    const stats = itemStatsData[id];
+    if (!stats) return;
+    for (const [key, val] of Object.entries(stats)) {
       if (itemStatMap[key]) {
         bonuses[itemStatMap[key]] += val;
       }
@@ -87,6 +121,37 @@ function calculateItemBonuses(selectedItems, itemsData) {
   return bonuses;
 }
 
+// ============================
+//  AUGMENT EFFECTS
+// ============================
+
+// Hardcoded augment → stat bonuses.
+// Add every augment you support here. 'custom' means handled separately.
+const augmentEffects = {
+  'Giant Slayer':          { attackDamage: 30, health: 150 },
+  'Lightning Strikes':     { attackSpeedPercent: 0.30 },
+  'Mystic Punch':          { abilityHaste: 20 },
+  'Bread and Cheese':      { health: 200, mana: 200 },
+  'Executioner':           { attackDamage: 20, lethality: 10 },
+  'Scoped Weapons':        { attackRange: 200 },
+  'Juice':                 { healShieldPower: 0.20 },
+  'Omni‑Soul':             { omnivamp: 0.15 },
+  'First Aid Kit':         { healthRegenFlat: 25, manaRegenFlat: 15 },
+  'Feel the Burn':         { flatMagicPen: 15 },
+  'Back to Basics':        { abilityPower: 40 },
+  'Die Another Day':       { tenacity: 0.25, slowResist: 0.25 },
+  "It's Critical":         { critChance: 0.40 },
+  'Slow Cooker':           { moveSpeedPercent: 0.10 },
+  'ADAPt':                 'custom'
+  // … add more as needed
+};
+
+/**
+ * Calculates stat bonuses from selected augments.
+ * @param {Set<number>} selectedAugments - Indices of selected augments.
+ * @param {Array} augments - Full augments array from augments.json.
+ * @returns {object}
+ */
 function calculateAugmentBonuses(selectedAugments, augments) {
   const bonuses = {
     health: 0, mana: 0, armor: 0, magicResistance: 0,
@@ -108,11 +173,12 @@ function calculateAugmentBonuses(selectedAugments, augments) {
 
   selectedAugments.forEach(index => {
     const aug = augments[index];
-    if (aug?.effects) {
-      for (const [key, val] of Object.entries(aug.effects)) {
-        if (bonuses.hasOwnProperty(key)) {
-          bonuses[key] += (typeof val === 'number' ? val : 0);
-        }
+    if (!aug) return;
+    const effect = augmentEffects[aug.name];
+    if (!effect || effect === 'custom') return;  // custom effects handled later
+    for (const [stat, val] of Object.entries(effect)) {
+      if (bonuses.hasOwnProperty(stat)) {
+        bonuses[stat] += (typeof val === 'number' ? val : 0);
       }
     }
   });
@@ -124,36 +190,47 @@ function calculateAugmentBonuses(selectedAugments, augments) {
 const CUSTOM_AUGMENTS = {
   'ADAPt': (final, base) => {
     const bonusAD = final.attackDamage - base.attackDamage;
-    console.log('ADAPt triggered! Bonus AD:', bonusAD);
     if (bonusAD > 0) {
       final.attackDamage = base.attackDamage;
       final.abilityPower += bonusAD * 1.67;
     }
     final.abilityPower *= 1.10;
-    console.log('Final AD:', final.attackDamage, 'Final AP:', final.abilityPower);
   }
 };
 
-function applyCustomAugmentEffects(selectedAugments, augments, finalStats, baseStats, itemBonuses, level) {
+function applyCustomAugmentEffects(selectedAugments, augments, finalStats, baseStats) {
   selectedAugments.forEach(index => {
     const aug = augments[index];
-    if (aug) {
-      const customEffect = Object.entries(CUSTOM_AUGMENTS).find(
-        ([key]) => key.toLowerCase() === aug.name.toLowerCase()
-      );
-      if (customEffect) {
-        customEffect[1](finalStats, baseStats, itemBonuses, level);
-      }
+    if (!aug) return;
+    const custom = CUSTOM_AUGMENTS[aug.name];
+    if (custom) {
+      custom(finalStats, baseStats);
     }
   });
 }
 
+// ============================
+//  COMPUTE FINAL STATS
+// ============================
+
+/**
+ * Combines base, item, and augment bonuses into final stats.
+ * @param {object} base - Champion base stats at level.
+ * @param {object} itemBonuses
+ * @param {object} augmentBonuses
+ * @param {number} level
+ * @param {Set<number>} selectedAugments - Indices of selected augments.
+ * @param {Array} augments - Full augments array.
+ * @returns {object}
+ */
 function computeFinalStats(base, itemBonuses, augmentBonuses, level, selectedAugments, augments) {
+  // Merge bonuses
   const totalBonuses = {};
   for (const key in itemBonuses) {
     totalBonuses[key] = (itemBonuses[key] || 0) + (augmentBonuses[key] || 0);
   }
 
+  // Adaptive force: gives AD if you have more bonus AD than AP, else AP
   const adaptive = totalBonuses.adaptiveForce || 0;
   let adBonus = totalBonuses.attackDamage || 0;
   let apBonus = totalBonuses.abilityPower || 0;
@@ -163,6 +240,7 @@ function computeFinalStats(base, itemBonuses, augmentBonuses, level, selectedAug
     apBonus += adaptive;
   }
 
+  // Attack speed formula: base AS * (1 + bonus from level + bonus from items/augments)
   const asBase = base.attackSpeed;
   const asPerLevel = base.attackSpeedPerLevel || 0;
   const asBonus = totalBonuses.attackSpeedPercent || 0;
@@ -196,13 +274,17 @@ function computeFinalStats(base, itemBonuses, augmentBonuses, level, selectedAug
     slowResist: totalBonuses.slowResist || 0
   };
 
+  // Apply custom augments (e.g., ADAPt) after base calculations
   if (selectedAugments && augments) {
-    applyCustomAugmentEffects(selectedAugments, augments, final, base, itemBonuses, level);
+    applyCustomAugmentEffects(selectedAugments, augments, final, base);
   }
 
   return final;
 }
 
+// ============================
+//  EXPORT
+// ============================
 window.StatCalculator = {
   calculateChampionBaseStats,
   calculateItemBonuses,
