@@ -4,99 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>LoL Arena Stat Calculator</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Segoe UI', Arial, sans-serif; background: #0a0e14; color: #e0e0e0; height: 100vh; overflow: hidden; }
-    .main-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; grid-template-rows: 1fr; height: 100vh; gap: 8px; padding: 8px; }
-    .section { background: #1a1e26; border-radius: 12px; padding: 12px; display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
-    .section h2 { font-size: 0.95rem; margin-bottom: 6px; color: #c8aa6e; text-align: center; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #333; padding-bottom: 4px; }
-    .champion-section { grid-column: 1 / 2; grid-row: 1 / 2; }
-    .items-section    { grid-column: 2 / 3; grid-row: 1 / 2; }
-    .augments-section { grid-column: 3 / 4; grid-row: 1 / 2; }
-    .stats-section    { grid-column: 4 / 5; grid-row: 1 / 2; overflow-y: auto; }
-    .selection-grid { display: flex; flex-wrap: wrap; gap: 6px; overflow-y: auto; align-content: flex-start; flex: 1; min-height: 0; }
-    .selection-item { width: 52px; height: 52px; border: 2px solid transparent; border-radius: 6px; cursor: pointer; transition: border-color 0.2s, background 0.2s; position: relative; flex-shrink: 0; }
-    .selection-item:hover { border-color: #c8aa6e; }
-    .selection-item.selected { border-color: #f0e6d2; background: rgba(200, 170, 110, 0.25); }
-    .selection-item img { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; }
-
-    .tooltip {
-      display: none;
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #1e1e24;
-      color: #f0e6d2;
-      padding: 8px 10px;
-      border-radius: 6px;
-      font-size: 0.75rem;
-      white-space: normal;
-      width: 220px;
-      word-wrap: break-word;
-      z-index: 100;
-      pointer-events: none;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.6);
-      text-align: left;
-      bottom: 110%;
-      top: auto;
-    }
-    .selection-item:hover .tooltip { display: block; }
-
-    .tooltip strong {
-      display: block;
-      font-size: 0.85rem;
-      margin-bottom: 3px;
-      color: #f0e6d2;
-      font-weight: 700;
-    }
-
-    .tooltip stats,
-    .tooltip attention { color: #c8aa6e; }
-    .tooltip passive,
-    .tooltip active { color: #ffffff; display: block; margin-top: 2px; }
-    .tooltip passiveName,
-    .tooltip activeName { color: #ffffff; font-weight: bold; }
-    .tooltip rarity { color: #9370db; }
-
-    .search-input { width: 100%; padding: 6px 10px; margin-bottom: 8px; background: #2a2e38; border: 1px solid #444; border-radius: 4px; color: #e0e0e0; font-size: 0.85rem; outline: none; }
-    .search-input::placeholder { color: #888; }
-    .search-input:focus { border-color: #c8aa6e; }
-
-    .stats-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 1.1rem; }
-    .stats-table td { padding: 6px 8px; border-bottom: 1px solid #2a2e38; }
-    .stats-table td:first-child { font-weight: bold; color: #c8aa6e; }
-    .stats-table td:last-child { text-align: right; color: #ffffff; }
-    .stats-table td:last-child.modified { color: #f0e68c; }
-
-    .stat-icon { width: 20px; height: 20px; vertical-align: middle; margin-right: 4px; }
-    .level-input-container { display: flex; align-items: center; justify-content: center; margin: 6px 0; }
-    .level-input-container input { width: 55px; padding: 4px; background: #2a2e38; border: 1px solid #444; border-radius: 4px; color: #e0e0e0; text-align: center; }
-    .selection-grid::-webkit-scrollbar, .stats-section::-webkit-scrollbar { width: 6px; }
-    .selection-grid::-webkit-scrollbar-track, .stats-section::-webkit-scrollbar-track { background: #111; border-radius: 3px; }
-    .selection-grid::-webkit-scrollbar-thumb, .stats-section::-webkit-scrollbar-thumb { background: #555; border-radius: 3px; }
-    .hotbar { display: flex; gap: 4px; min-height: 36px; margin-bottom: 6px; padding: 3px; background: #0f1219; border-radius: 6px; align-items: center; }
-    .hotbar-slot { width: 32px; height: 32px; border: 2px dashed #333; border-radius: 4px; position: relative; background: #111; }
-    .hotbar-slot.filled { border: 2px solid #555; cursor: pointer; }
-    .hotbar-slot.filled:hover { border-color: #c8aa6e; }
-    .hotbar-slot img { width: 100%; height: 100%; object-fit: cover; border-radius: 3px; }
-    .hotbar-slot .remove-x { display: none; position: absolute; top: -6px; right: -6px; width: 16px; height: 16px; background: #c0392b; border-radius: 50%; color: #fff; font-size: 10px; line-height: 16px; text-align: center; }
-    .hotbar-slot.filled:hover .remove-x { display: block; }
-
-    /* Headers / Separators inside the item grid */
-    .items-header {
-      width: 100%;
-      text-align: center;
-      padding: 8px 0;
-      background: #2a2e38;
-      color: #c8aa6e;
-      font-weight: bold;
-      font-size: 0.8rem;
-      margin: 8px 0;
-      border-radius: 4px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-  </style>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <div class="main-grid">
@@ -128,6 +36,7 @@
   </div>
 
   <script src="statCalculator.js"></script>
+  <script src="statsDisplay.js"></script>
   <script>
     (function() {
       const state = {
@@ -142,6 +51,10 @@
       let championsData = {}, itemsData = {}, augments = [], ddVersion = '';
       let itemStatsData = {};
 
+      // Item configuration loaded from items.json (or fallback)
+      let ARENA_ITEM_NAMES, JUICE_NAMES, ELIXIR_NAMES, CUSTOM_ITEM_ICONS,
+          SR_COMPONENT_ALLOWED, ALLOWED_CONSUMABLES, REMOVED_NAMES;
+
       const championGrid = document.getElementById('championGrid');
       const itemGrid = document.getElementById('itemGrid');
       const augmentGrid = document.getElementById('augmentGrid');
@@ -153,134 +66,41 @@
       const itemSearch = document.getElementById('itemSearch');
       const augmentSearch = document.getElementById('augmentSearch');
 
-      // ----- Arena-exclusive item names (all, including juices) -----
-      const ARENA_ITEM_NAMES = new Set([
-        "Cappa Juice",
-        "Juice of Haste",
-        "Juice of Power",
-        "Juice of Vitality",
-        "Black Hole Gauntlet",
-        "Cloak of Starry Night",
-        "Crown of the Shattered Queen",
-        "Cruelty",
-        "Darksteel Talons",
-        "Decapitator",
-        "Demon King's Crown",
-        "Demonic Embrace",
-        "Detonation Orb",
-        "Diamond-Tipped Spear",
-        "Divine Sunderer",
-        "Dragonheart",
-        "Duskblade of Draktharr",
-        "Eleisa's Miracle",
-        "Empyrean Promise",
-        "Everfrost",
-        "Flesheater",
-        "Force of Entropy",
-        "Fulmination",
-        "Galeforce",
-        "Gambler's Blade",
-        "Gargoyle Stoneplate",
-        "Ghostcrawlers",
-        "Goredrinker",
-        "Hamstringer",
-        "Hemomancer's Helm",
-        "Hexbolt Companion",
-        "Innervating Locket",
-        "Kinkou Jitte",
-        "Mirage Blade",
-        "Moonflair Spellblade",
-        "Lightning Rod",
-        "Night Harvester",
-        "Prowler's Claw",
-        "Puppeteer",
-        "Pyromancer's Cloak",
-        "Radiant Virtue",
-        "Reality Fracture",
-        "Reaper's Toll",
-        "Regicide",
-        "Reverberation",
-        "Rite of Ruin",
-        "Runecarver",
-        "Sanguine Gift",
-        "Shield of Molten Stone",
-        "Sword of the Divine",
-        "Talisman of Ascension",
-        "Turbo Chemtank",
-        "Twilight's Edge",
-        "Twin Mask",
-        "Anathema's Chains",
-        "Atma's Reckoning",
-        "Hellfire Hatchet",
-        "Perplexity",
-        "Spectral Cutlass",
-        "Sword of Blossoming Dawn",
-        "The Golden Spatula",
-        "Wooglet's Witchcap",
-        "Wordless Promise",
-        "Zephyr"
-      ]);
-
-      // ----- Names of the four juices -----
-      const JUICE_NAMES = new Set([
-        "Cappa Juice",
-        "Juice of Haste",
-        "Juice of Power",
-        "Juice of Vitality"
-      ]);
-
-      // ----- Custom icon overrides -----
-      const CUSTOM_ITEM_ICONS = {
+      // Original hard-coded lists (used as fallback if items.json is missing)
+      const FALLBACK_ARENA_ITEMS = [
+        "Cappa Juice","Juice of Haste","Juice of Power","Juice of Vitality",
+        "Black Hole Gauntlet","Cloak of Starry Night","Crown of the Shattered Queen",
+        "Cruelty","Darksteel Talons","Decapitator","Demon King's Crown",
+        "Demonic Embrace","Detonation Orb","Diamond-Tipped Spear","Divine Sunderer",
+        "Dragonheart","Duskblade of Draktharr","Eleisa's Miracle","Empyrean Promise",
+        "Everfrost","Flesheater","Force of Entropy","Fulmination","Galeforce",
+        "Gambler's Blade","Gargoyle Stoneplate","Ghostcrawlers","Goredrinker",
+        "Hamstringer","Hemomancer's Helm","Hexbolt Companion","Innervating Locket",
+        "Kinkou Jitte","Mirage Blade","Moonflair Spellblade","Lightning Rod",
+        "Night Harvester","Prowler's Claw","Puppeteer","Pyromancer's Cloak",
+        "Radiant Virtue","Reality Fracture","Reaper's Toll","Regicide",
+        "Reverberation","Rite of Ruin","Runecarver","Sanguine Gift",
+        "Shield of Molten Stone","Sword of the Divine","Talisman of Ascension",
+        "Turbo Chemtank","Twilight's Edge","Twin Mask","Anathema's Chains",
+        "Atma's Reckoning","Hellfire Hatchet","Perplexity","Spectral Cutlass",
+        "Sword of Blossoming Dawn","The Golden Spatula","Wooglet's Witchcap",
+        "Wordless Promise","Zephyr"
+      ];
+      const FALLBACK_JUICE_NAMES = ["Cappa Juice","Juice of Haste","Juice of Power","Juice of Vitality"];
+      const FALLBACK_ELIXIR_NAMES = ["Elixir of Iron","Elixir of Sorcery","Elixir of Wrath"];
+      const FALLBACK_CUSTOM_ICONS = {
         "Innervating Locket": "https://wiki.leagueoflegends.com/en-us/images/Innervating_Locket_item.png?23f50",
         "Sunfire Aegis": "https://wiki.leagueoflegends.com/en-us/images/Sunfire_Aegis_item.png?bcdcc",
         "Zephyr": "https://wiki.leagueoflegends.com/en-us/images/Zephyr_item.png?6194a"
       };
-
-      // ----- SR items that are allowed despite having `into` (component override) -----
-      const SR_COMPONENT_ALLOWED = new Set([
-        "Whispering Circlet"
-      ]);
-
-      // ----- Elixir names (mutually exclusive) -----
-      const ELIXIR_NAMES = new Set([
-        "Elixir of Iron",
-        "Elixir of Sorcery",
-        "Elixir of Wrath"
-      ]);
-
-      // ----- Consumables that we explicitly allow (bypass tag filtering) -----
-      const ALLOWED_CONSUMABLES = new Set([
-        ...ELIXIR_NAMES,
-        ...JUICE_NAMES
-      ]);
-
-      const statIcons = {
-        'Health': 'https://wiki.leagueoflegends.com/en-us/images/Health_icon.png',
-        'Mana': 'https://wiki.leagueoflegends.com/en-us/images/Mana_icon.png',
-        'Health Regen': 'https://wiki.leagueoflegends.com/en-us/images/Health_regeneration_icon.png',
-        'Mana Regen': 'https://wiki.leagueoflegends.com/en-us/images/Mana_regeneration_icon.png',
-        'Armor': 'https://wiki.leagueoflegends.com/en-us/images/Armor_icon.png',
-        'Magic Resist': 'https://wiki.leagueoflegends.com/en-us/images/Magic_resistance_icon.png',
-        'Attack Damage': 'https://wiki.leagueoflegends.com/en-us/images/Attack_damage_icon.png',
-        'Ability Power': 'https://wiki.leagueoflegends.com/en-us/images/Ability_power_icon.svg?c0f6c',
-        'Attack Speed': 'https://wiki.leagueoflegends.com/en-us/images/Attack_speed_icon.png',
-        'Ability Haste': 'https://wiki.leagueoflegends.com/en-us/images/thumb/Cooldown_reduction_icon.png/15px-Cooldown_reduction_icon.png?27276',
-        'Crit Chance': 'https://wiki.leagueoflegends.com/en-us/images/Critical_strike_chance_icon.png',
-        'Lethality': 'https://wiki.leagueoflegends.com/en-us/images/Armor_penetration_icon.png',
-        'Flat Magic Pen': 'https://wiki.leagueoflegends.com/en-us/images/Magic_penetration_icon.png',
-        '% Magic Pen': 'https://wiki.leagueoflegends.com/en-us/images/Magic_penetration_icon.png',
-        'Flat Armor Pen': 'https://wiki.leagueoflegends.com/en-us/images/Armor_penetration_icon.png',
-        '% Armor Pen': 'https://wiki.leagueoflegends.com/en-us/images/Armor_penetration_icon.png',
-        'Heal & Shield Power': 'https://wiki.leagueoflegends.com/en-us/images/Heal_and_shield_power_icon.png',
-        'Life Steal': 'https://wiki.leagueoflegends.com/en-us/images/Life_steal_icon.png',
-        'Spell Vamp': 'https://wiki.leagueoflegends.com/en-us/images/Spell_vamp_icon.png',
-        'Omnivamp': 'https://wiki.leagueoflegends.com/en-us/images/Omnivamp_icon.png',
-        'Move Speed': 'https://wiki.leagueoflegends.com/en-us/images/Movement_speed_icon.png',
-        '% Move Speed': 'https://wiki.leagueoflegends.com/en-us/images/Movement_speed_icon.png',
-        'Attack Range': 'https://wiki.leagueoflegends.com/en-us/images/thumb/Range_icon.png/15px-Range_icon.png?ae16f',
-        'Tenacity': 'https://wiki.leagueoflegends.com/en-us/images/Tenacity_icon.png',
-        'Slow Resist': 'https://wiki.leagueoflegends.com/en-us/images/thumb/Slow_immune_icon.png/15px-Slow_immune_icon.png?4ad41'
-      };
+      const FALLBACK_SR_COMPONENT_ALLOWED = ["Whispering Circlet"];
+      const FALLBACK_REMOVED_NAMES = [
+        "Cull","Recall","Disabled Recall","Total Biscuit of Everlasting Will",
+        "Trailblazer","Chemtech Putrifier","Mejai's Soulstealer","Deathfire Grasp",
+        "Leeching Leer","Stirring Wardstone","Veigar's Talisman",
+        "Veigar's Talisman of Ascension","Gustwalker Hatchling","Mosstomper Seedling",
+        "Scorchclaw Pup","Gunmetal Greaves"
+      ];
 
       function positionTooltip(tooltip, icon, grid) {
         tooltip.style.display = 'block';
@@ -360,6 +180,30 @@
 
           await loadItemStats();
 
+          // ----- Load item configuration (static lists) -----
+          let config = {};
+          try {
+            const configRes = await fetch('items.json');
+            if (configRes.ok) {
+              config = await configRes.json();
+              console.log('Item configuration loaded from items.json.');
+            } else {
+              console.warn('items.json not found – using built‑in fallback.');
+            }
+          } catch(e) {
+            console.warn('Could not load items.json – using built‑in fallback.', e);
+          }
+
+          // Populate constants (from config or fallback)
+          ARENA_ITEM_NAMES   = new Set(config.arenaItemNames     || FALLBACK_ARENA_ITEMS);
+          JUICE_NAMES        = new Set(config.juiceNames          || FALLBACK_JUICE_NAMES);
+          ELIXIR_NAMES       = new Set(config.elixirNames         || FALLBACK_ELIXIR_NAMES);
+          CUSTOM_ITEM_ICONS  = config.customItemIcons             || FALLBACK_CUSTOM_ICONS;
+          SR_COMPONENT_ALLOWED= new Set(config.srComponentAllowed || FALLBACK_SR_COMPONENT_ALLOWED);
+          REMOVED_NAMES      = new Set(config.removedNames        || FALLBACK_REMOVED_NAMES);
+          ALLOWED_CONSUMABLES = new Set([...ELIXIR_NAMES, ...JUICE_NAMES]);
+
+          // Load augments
           try {
             const augRes = await fetch('augments.json');
             if (augRes.ok) {
@@ -427,25 +271,6 @@
       function renderItems() {
         itemGrid.innerHTML = '';
         console.log('Filtering items...');
-
-        const REMOVED_NAMES = new Set([
-          'Cull',
-          'Recall',
-          'Disabled Recall',
-          'Total Biscuit of Everlasting Will',
-          'Trailblazer',
-          'Chemtech Putrifier',
-          "Mejai's Soulstealer",
-          'Deathfire Grasp',
-          'Leeching Leer',
-          'Stirring Wardstone',
-          "Veigar's Talisman",
-          "Veigar's Talisman of Ascension",
-          "Gustwalker Hatchling",
-          "Mosstomper Seedling",
-          "Scorchclaw Pup",
-          "Gunmetal Greaves"
-        ]);
 
         const isInvalidBase = (item) => {
           if (!item.gold?.total || item.gold.total <= 0) return true;
@@ -521,7 +346,7 @@
 
         console.log(`Elixirs: ${elixirUnique.length}, SR: ${srUnique.length}, Juices: ${juiceUnique.length}, Other Arena: ${otherArenaUnique.length}`);
 
-        // Clear selected items that are no longer valid (exclude juices? No, juices are normal items except Cappa)
+        // Clear selected items that are no longer valid
         const allValidIds = new Set([
           ...srUnique.map(e => e.id),
           ...juiceUnique.filter(e => e.item.name !== 'Cappa Juice').map(e => e.id),
@@ -550,7 +375,6 @@
           tooltip.innerHTML = `<strong>${item.name}</strong>${item.description || ''}`;
           div.appendChild(tooltip);
 
-          // Selection visual
           if (ELIXIR_NAMES.has(item.name)) {
             if (state.activeElixir === id) div.classList.add('selected');
           } else if (item.name !== 'Cappa Juice') {
@@ -566,7 +390,7 @@
           return div;
         };
 
-        // --- Elixir section (mutually exclusive) ---
+        // --- Elixir section ---
         if (elixirUnique.length > 0) {
           const elixirHeader = document.createElement('div');
           elixirHeader.className = 'items-header';
@@ -603,9 +427,8 @@
           itemGrid.appendChild(createItemElement(id, item));
         });
 
-        // ---- Arena section with Juices first ----
+        // ---- Arena section (Juices + Arena Exclusive) ----
         if (juiceUnique.length > 0 || otherArenaUnique.length > 0) {
-          // Juices sub-section
           if (juiceUnique.length > 0) {
             const juiceHeader = document.createElement('div');
             juiceHeader.className = 'items-header';
@@ -625,7 +448,6 @@
             });
           }
 
-          // Other Arena items
           if (otherArenaUnique.length > 0) {
             const arenaHeader = document.createElement('div');
             arenaHeader.className = 'items-header';
@@ -831,106 +653,19 @@
         calculateStats();
       });
 
+      // This is now the only place that calls the external stats module
       function calculateStats() {
-        if (!state.selectedChampion || !championsData[state.selectedChampion]) {
-          statsTable.innerHTML = '<tr><td colspan="2">Select a champion</td></tr>';
-          return;
-        }
-
-        const champ = championsData[state.selectedChampion];
-        const level = state.level;
-
-        const effectiveItems = new Set(state.selectedItems);
-        if (state.activeElixir) effectiveItems.add(state.activeElixir);
-
-        const base = StatCalculator.calculateChampionBaseStats(champ, level);
-        const itemBonuses = StatCalculator.calculateItemBonuses(effectiveItems, itemStatsData);
-        const augmentBonuses = StatCalculator.calculateAugmentBonuses(state.selectedAugments, augments);
-        const final = StatCalculator.computeFinalStats(
-          base, itemBonuses, augmentBonuses, level,
-          state.selectedAugments, augments
-        );
-
-        final.hats = state.hats;
-
-        const isModified = (label) => {
-          if (label === 'Hats') return final.hats > 0;
-          switch (label) {
-            case 'Health': return final.health !== base.health;
-            case 'Mana': return final.mana !== base.mana;
-            case 'Health Regen': return final.healthRegen5 !== (base.healthRegen || 0) * 5;
-            case 'Mana Regen': return final.manaRegen5 !== (base.manaRegen || 0) * 5;
-            case 'Armor': return final.armor !== base.armor;
-            case 'Magic Resist': return final.magicResistance !== base.magicResistance;
-            case 'Attack Damage': return final.attackDamage !== base.attackDamage;
-            case 'Ability Power': return final.abilityPower !== 0;
-            case 'Attack Speed':
-              const baseAS = base.attackSpeed * (1 + (base.attackSpeedPerLevel || 0) * (level - 1));
-              return final.attackSpeed !== baseAS;
-            case 'Ability Haste': return final.abilityHaste !== 0;
-            case 'Crit Chance': return final.critChance !== 0;
-            case 'Lethality': return final.lethality !== 0;
-            case 'Flat Magic Pen': return final.flatMagicPen !== 0;
-            case '% Magic Pen': return final.percentMagicPen !== 0;
-            case 'Flat Armor Pen': return final.flatArmorPen !== 0;
-            case '% Armor Pen': return final.percentArmorPen !== 0;
-            case 'Heal & Shield Power': return final.healShieldPower !== 0;
-            case 'Life Steal': return final.lifeSteal !== 0;
-            case 'Spell Vamp': return final.spellVamp !== 0;
-            case 'Omnivamp': return final.omnivamp !== 0;
-            case 'Move Speed': return final.moveSpeed !== base.moveSpeed;
-            case '% Move Speed': return final.moveSpeedPercent !== 0;
-            case 'Attack Range': return final.attackRange !== 0;
-            case 'Tenacity': return final.tenacity !== 0;
-            case 'Slow Resist': return final.slowResist !== 0;
-            default: return false;
-          }
-        };
-
-        const rows = [];
-        function addRow(label, value, formatter, modified) {
-          const iconUrl = statIcons[label] || '';
-          const iconHTML = iconUrl ? `<img class="stat-icon" src="${iconUrl}" alt="${label}" onerror="this.style.display='none';">` : '';
-          let display;
-          if (label === 'Hats') {
-            display = Math.round(value);
-          } else if (formatter === 'percent') display = (value * 100).toFixed(1) + '%';
-          else if (formatter === 'as') display = value.toFixed(3);
-          else if (formatter === 'integer') display = Math.round(value);
-          else if (formatter === 'flat') display = Math.round(value);
-          else display = value;
-          const modClass = modified ? ' class="modified"' : '';
-          rows.push(`<tr><td>${iconHTML} ${label}</td><td${modClass}>${display}</td></tr>`);
-        }
-
-        addRow('Health', final.health, 'integer', isModified('Health'));
-        addRow('Mana', final.mana, 'integer', isModified('Mana'));
-        addRow('Health Regen', final.healthRegen5, 'integer', isModified('Health Regen'));
-        addRow('Mana Regen', final.manaRegen5, 'integer', isModified('Mana Regen'));
-        addRow('Armor', final.armor, 'integer', isModified('Armor'));
-        addRow('Magic Resist', final.magicResistance, 'integer', isModified('Magic Resist'));
-        addRow('Attack Damage', final.attackDamage, 'integer', isModified('Attack Damage'));
-        addRow('Ability Power', final.abilityPower, 'integer', isModified('Ability Power'));
-        addRow('Attack Speed', final.attackSpeed, 'as', isModified('Attack Speed'));
-        addRow('Ability Haste', final.abilityHaste, 'integer', isModified('Ability Haste'));
-        addRow('Crit Chance', final.critChance, 'percent', isModified('Crit Chance'));
-        addRow('Lethality', final.lethality, 'integer', isModified('Lethality'));
-        addRow('Flat Magic Pen', final.flatMagicPen, 'integer', isModified('Flat Magic Pen'));
-        addRow('% Magic Pen', final.percentMagicPen, 'percent', isModified('% Magic Pen'));
-        addRow('Flat Armor Pen', final.flatArmorPen, 'integer', isModified('Flat Armor Pen'));
-        addRow('% Armor Pen', final.percentArmorPen, 'percent', isModified('% Armor Pen'));
-        addRow('Heal & Shield Power', final.healShieldPower, 'percent', isModified('Heal & Shield Power'));
-        addRow('Life Steal', final.lifeSteal, 'percent', isModified('Life Steal'));
-        addRow('Spell Vamp', final.spellVamp, 'percent', isModified('Spell Vamp'));
-        addRow('Omnivamp', final.omnivamp, 'percent', isModified('Omnivamp'));
-        addRow('Move Speed', final.moveSpeed, 'integer', isModified('Move Speed'));
-        addRow('% Move Speed', final.moveSpeedPercent, 'percent', isModified('% Move Speed'));
-        addRow('Attack Range', final.attackRange, 'integer', isModified('Attack Range'));
-        addRow('Tenacity', final.tenacity, 'percent', isModified('Tenacity'));
-        addRow('Slow Resist', final.slowResist, 'percent', isModified('Slow Resist'));
-        addRow('Hats', final.hats, 'integer', isModified('Hats'));
-
-        statsTable.innerHTML = rows.join('');
+        statsTable.innerHTML = generateStatsHTML({
+          championKey:      state.selectedChampion,
+          championsData:    championsData,
+          level:            state.level,
+          selectedItems:    state.selectedItems,
+          activeElixir:     state.activeElixir,
+          selectedAugments: state.selectedAugments,
+          hats:             state.hats,
+          itemStatsData:    itemStatsData,
+          augments:         augments
+        });
       }
 
       loadData();

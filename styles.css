@@ -13,11 +13,11 @@ body {
   overflow: hidden;
 }
 
-/* ---------- Main Grid Layout ---------- */
+/* ---------- Main Grid Layout (4 columns, stats on the right) ---------- */
 .main-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  grid-template-rows: 1fr auto;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  grid-template-rows: 1fr;
   height: 100vh;
   gap: 8px;
   padding: 8px;
@@ -30,11 +30,12 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  min-height: 0;
 }
 
 .section h2 {
-  font-size: 1.1rem;
-  margin-bottom: 8px;
+  font-size: 0.95rem;
+  margin-bottom: 6px;
   color: #c8aa6e;
   text-align: center;
   text-transform: uppercase;
@@ -59,14 +60,12 @@ body {
 }
 
 .stats-section {
-  grid-column: 1 / -1;
-  grid-row: 2 / 3;
-  background: #1a1e26;
-  border-radius: 12px;
-  padding: 16px;
+  grid-column: 4 / 5;
+  grid-row: 1 / 2;
+  overflow-y: auto;
 }
 
-/* ---------- Icon Selection Grid ---------- */
+/* ---------- Selection Grid ---------- */
 .selection-grid {
   display: flex;
   flex-wrap: wrap;
@@ -74,6 +73,7 @@ body {
   overflow-y: auto;
   align-content: flex-start;
   flex: 1;
+  min-height: 0;
 }
 
 .selection-item {
@@ -83,7 +83,8 @@ body {
   border-radius: 6px;
   cursor: pointer;
   transition: border-color 0.2s, background 0.2s;
-  position: relative;              /* needed for tooltip positioning */
+  position: relative;
+  flex-shrink: 0;
 }
 
 .selection-item:hover {
@@ -103,10 +104,9 @@ body {
 }
 
 /* ---------- Tooltip ---------- */
-.selection-item .tooltip {
+.tooltip {
   display: none;
   position: absolute;
-  bottom: 110%;
   left: 50%;
   transform: translateX(-50%);
   background: #1e1e24;
@@ -114,17 +114,70 @@ body {
   padding: 8px 10px;
   border-radius: 6px;
   font-size: 0.75rem;
-  white-space: normal;            /* allows text to wrap */
-  width: 220px;                   /* fixed width for easy JS calculation */
+  white-space: normal;
+  width: 220px;
   word-wrap: break-word;
   z-index: 100;
   pointer-events: none;
   box-shadow: 0 2px 8px rgba(0,0,0,0.6);
   text-align: left;
+  bottom: 110%;
+  top: auto;
 }
 
 .selection-item:hover .tooltip {
   display: block;
+}
+
+.tooltip strong {
+  display: block;
+  font-size: 0.85rem;
+  margin-bottom: 3px;
+  color: #f0e6d2;
+  font-weight: 700;
+}
+
+.tooltip stats,
+.tooltip attention {
+  color: #c8aa6e;
+}
+
+.tooltip passive,
+.tooltip active {
+  color: #ffffff;
+  display: block;
+  margin-top: 2px;
+}
+
+.tooltip passiveName,
+.tooltip activeName {
+  color: #ffffff;
+  font-weight: bold;
+}
+
+.tooltip rarity {
+  color: #9370db;
+}
+
+/* ---------- Search Inputs ---------- */
+.search-input {
+  width: 100%;
+  padding: 6px 10px;
+  margin-bottom: 8px;
+  background: #2a2e38;
+  border: 1px solid #444;
+  border-radius: 4px;
+  color: #e0e0e0;
+  font-size: 0.85rem;
+  outline: none;
+}
+
+.search-input::placeholder {
+  color: #888;
+}
+
+.search-input:focus {
+  border-color: #c8aa6e;
 }
 
 /* ---------- Stats Table ---------- */
@@ -136,18 +189,29 @@ body {
 }
 
 .stats-table td {
-  padding: 8px 12px;
+  padding: 6px 8px;
   border-bottom: 1px solid #2a2e38;
 }
 
 .stats-table td:first-child {
   font-weight: bold;
   color: #c8aa6e;
-  width: 40%;
 }
 
 .stats-table td:last-child {
   text-align: right;
+  color: #ffffff;
+}
+
+.stats-table td:last-child.modified {
+  color: #f0e68c;
+}
+
+.stat-icon {
+  width: 20px;
+  height: 20px;
+  vertical-align: middle;
+  margin-right: 4px;
 }
 
 /* ---------- Level Input ---------- */
@@ -173,15 +237,91 @@ body {
   text-align: center;
 }
 
+/* ---------- Hotbar for selected items / augments ---------- */
+.hotbar {
+  display: flex;
+  gap: 4px;
+  min-height: 36px;
+  margin-bottom: 6px;
+  padding: 3px;
+  background: #0f1219;
+  border-radius: 6px;
+  align-items: center;
+}
+
+.hotbar-slot {
+  width: 32px;
+  height: 32px;
+  border: 2px dashed #333;
+  border-radius: 4px;
+  position: relative;
+  background: #111;
+}
+
+.hotbar-slot.filled {
+  border: 2px solid #555;
+  cursor: pointer;
+}
+
+.hotbar-slot.filled:hover {
+  border-color: #c8aa6e;
+}
+
+.hotbar-slot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 3px;
+}
+
+.hotbar-slot .remove-x {
+  display: none;
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 16px;
+  height: 16px;
+  background: #c0392b;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 10px;
+  line-height: 16px;
+  text-align: center;
+}
+
+.hotbar-slot.filled:hover .remove-x {
+  display: block;
+}
+
+/* ---------- Section Headers inside Item Grid ---------- */
+.items-header {
+  width: 100%;
+  text-align: center;
+  padding: 8px 0;
+  background: #2a2e38;
+  color: #c8aa6e;
+  font-weight: bold;
+  font-size: 0.8rem;
+  margin: 8px 0;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 /* ---------- Scrollbar Styling ---------- */
-.selection-grid::-webkit-scrollbar {
+.selection-grid::-webkit-scrollbar,
+.stats-section::-webkit-scrollbar {
   width: 6px;
 }
-.selection-grid::-webkit-scrollbar-track {
+
+.selection-grid::-webkit-scrollbar-track,
+.stats-section::-webkit-scrollbar-track {
   background: #111;
   border-radius: 3px;
 }
-.selection-grid::-webkit-scrollbar-thumb {
+
+.selection-grid::-webkit-scrollbar-thumb,
+.stats-section::-webkit-scrollbar-thumb {
   background: #555;
   border-radius: 3px;
 }
