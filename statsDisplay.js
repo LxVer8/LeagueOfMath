@@ -58,6 +58,7 @@ function generateStatsHTML({
     selectedAugments, augments,
     championKey
   );
+  console.log('Base AD:', base.attackDamage, 'Final AD:', final.attackDamage);
 
   final.hats = hats;
 

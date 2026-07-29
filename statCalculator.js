@@ -10,10 +10,12 @@ function getScaledStat(base, growth, g, factorType) {
   }
   let f;
   switch (factorType) {
-    case 'hp_ad':       f = 0.685 + 0.0175 * g; break;
-    case 'mana':        f = 0.5   + 0.025  * g; break;
-    case 'regen':       f = 0.75  + 0.025  * g; break;
-    default:            f = 0.685 + 0.0175 * g;
+      case 'hp_ad':       f = 0.685 + 0.0175 * g; break;
+      case 'mana':        f = 0.7025 + 0.0175 * g; break;
+      case 'regen':       f = 0.75  + 0.025  * g; break;
+      case 'armor':
+      case 'mr':          f = 0.65  + 0.035  * g; break;
+      default:            f = 0.685 + 0.0175 * g;
   }
   return base + growth * g * f;
 }
@@ -24,8 +26,8 @@ function calculateChampionBaseStats(champData, level) {
   return {
     health:           getScaledStat(stats.hp,             stats.hpperlevel,             g, 'hp_ad'),
     mana:             getScaledStat(stats.mp,             stats.mpperlevel,             g, 'mana'),
-    armor:            getScaledStat(stats.armor,          stats.armorperlevel,          g, 'linear'),
-    magicResistance:  getScaledStat(stats.spellblock,     stats.spellblockperlevel,     g, 'linear'),
+    armor:            getScaledStat(stats.armor,          stats.armorperlevel,          g, 'armor'),
+    magicResistance:  getScaledStat(stats.spellblock,     stats.spellblockperlevel,     g, 'mr'),
     attackDamage:     getScaledStat(stats.attackdamage,   stats.attackdamageperlevel,   g, 'hp_ad'),
     healthRegen:      getScaledStat(stats.hpregen,        stats.hpregenperlevel,        g, 'regen'),
     manaRegen:        getScaledStat(stats.mpregen,        stats.mpregenperlevel,        g, 'regen'),
@@ -69,13 +71,6 @@ function calculateItemBonuses(selectedItems, itemStatsData) {
       }
     }
   });
-
-if (bonuses.manaRegenPercent !== 0 || bonuses.healthRegenPercent !== 0) {
-  console.log('Regen % bonuses found:', { manaRegenPercent: bonuses.manaRegenPercent, healthRegenPercent: bonuses.healthRegenPercent });
-}
-
-console.log('Item bonuses (all):', JSON.stringify(bonuses));
-
   return bonuses;
 }
 
@@ -243,8 +238,6 @@ function computeFinalStats(base, itemBonuses, augmentBonuses, level, selectedAug
 
   // Champion‑specific passives
   applyChampionPassives(final, championKey);
-
-  console.log('Final healthRegen5:', final.healthRegen5, 'manaRegen5:', final.manaRegen5);
 
   return final;
 }
