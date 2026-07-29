@@ -35,6 +35,7 @@
     </div>
   </div>
 
+  <script src="championPassives.js"></script>
   <script src="statCalculator.js"></script>
   <script src="statsDisplay.js"></script>
   <script>
@@ -142,20 +143,13 @@
 
       async function loadItemStats() {
         try {
-          const res = await fetch('https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/items.json');
-          if (!res.ok) throw new Error('Failed to fetch item stats');
-          const arr = await res.json();
-          arr.forEach(item => {
-            if (item.id && item.stats) {
-              itemStatsData[item.id] = {};
-              item.stats.forEach(s => {
-                itemStatsData[item.id][s.name] = s.value;
-              });
-            }
-          });
-          console.log(`Loaded item stats for ${Object.keys(itemStatsData).length} items from CommunityDragon.`);
+          const res = await fetch('itemStats.json');
+          if (!res.ok) throw new Error('Failed to fetch itemStats.json');
+          itemStatsData = await res.json();
+          console.log(`Loaded item stats for ${Object.keys(itemStatsData).length} items from local file.`);
         } catch(e) {
-          console.warn('Could not load item stats from CDragon, using empty map', e);
+          console.warn('Could not load itemStats.json, using empty map', e);
+          itemStatsData = {};
         }
       }
 

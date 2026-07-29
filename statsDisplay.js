@@ -30,21 +30,6 @@ const statIcons = {
   'Slow Resist':          'https://wiki.leagueoflegends.com/en-us/images/thumb/Slow_immune_icon.png/15px-Slow_immune_icon.png?4ad41'
 };
 
-/**
- * Generates the HTML for the full stats table.
- *
- * @param {Object}  params
- * @param {string}  params.championKey      - selected champion key (e.g. "Aatrox")
- * @param {Object}  params.championsData    - full champion data from Data Dragon
- * @param {number}  params.level            - current champion level
- * @param {Set}     params.selectedItems    - set of item IDs
- * @param {string|null} params.activeElixir - active elixir ID (or null)
- * @param {Set}     params.selectedAugments- set of augment indices
- * @param {number}  params.hats             - number of Cappa Juice clicks
- * @param {Object}  params.itemStatsData    - item stat values from CommunityDragon
- * @param {Array}   params.augments         - augments array from augments.json
- * @returns {string}  HTML string to be injected into the stats table.
- */
 function generateStatsHTML({
   championKey,
   championsData,
@@ -62,29 +47,29 @@ function generateStatsHTML({
 
   const champ = championsData[championKey];
 
-  // Combine selected items + active elixir for calculation
   const effectiveItems = new Set(selectedItems);
   if (activeElixir) effectiveItems.add(activeElixir);
 
-  // Use the external StatCalculator (must be loaded)
   const base = StatCalculator.calculateChampionBaseStats(champ, level);
   const itemBonuses = StatCalculator.calculateItemBonuses(effectiveItems, itemStatsData);
   const augmentBonuses = StatCalculator.calculateAugmentBonuses(selectedAugments, augments);
   const final = StatCalculator.computeFinalStats(
     base, itemBonuses, augmentBonuses, level,
-    selectedAugments, augments
+    selectedAugments, augments,
+    championKey
   );
 
   final.hats = hats;
 
-  // Helper to check if a value differs from the base (for highlighting)
   function isModified(label) {
     if (label === 'Hats') return final.hats > 0;
     switch (label) {
       case 'Health':            return final.health !== base.health;
       case 'Mana':              return final.mana !== base.mana;
-      case 'Health Regen':      return final.healthRegen5 !== (base.healthRegen || 0) * 5;
-      case 'Mana Regen':        return final.manaRegen5 !== (base.manaRegen || 0) * 5;
+      case 'Health Regen':
+        return +final.healthRegen.toFixed(2) !== +(base.healthRegen || 0).toFixed(2);
+      case 'Mana Regen':
+        return +final.manaRegen.toFixed(2) !== +(base.manaRegen || 0).toFixed(2);
       case 'Armor':             return final.armor !== base.armor;
       case 'Magic Resist':      return final.magicResistance !== base.magicResistance;
       case 'Attack Damage':     return final.attackDamage !== base.attackDamage;
@@ -137,8 +122,8 @@ function generateStatsHTML({
 
   addRow('Health',               final.health,            'integer');
   addRow('Mana',                 final.mana,              'integer');
-  addRow('Health Regen',         final.healthRegen5,      'integer');
-  addRow('Mana Regen',           final.manaRegen5,        'integer');
+  addRow('Health Regen',         final.healthRegen,       'integer');
+  addRow('Mana Regen',           final.manaRegen,         'integer');
   addRow('Armor',                final.armor,             'integer');
   addRow('Magic Resist',         final.magicResistance,   'integer');
   addRow('Attack Damage',        final.attackDamage,      'integer');

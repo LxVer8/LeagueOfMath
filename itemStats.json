@@ -1,0 +1,981 @@
+{
+  "2501": {
+    "name": "Overlord's Bloodmail",
+    "health": 550,
+    "attackDamage": 30
+  },
+  "2502": {
+    "name": "Unending Despair",
+    "health": 400,
+    "armor": 50,
+    "abilityHaste": 15
+  },
+  "2503": {
+    "name": "Blackfire Torch",
+    "abilityPower": 80,
+    "mana": 600,
+    "abilityHaste": 20
+  },
+  "2504": {
+    "name": "Kaenic Rookern",
+    "health": 400,
+    "magicResistance": 80,
+    "healthRegenPercent": 1
+  },
+  "2510": {
+    "name": "Dusk and Dawn",
+    "abilityPower": 60,
+    "health": 300,
+    "abilityHaste": 20,
+    "attackSpeedPercent": 0.2
+  },
+  "2512": {
+    "name": "Fiendhunter Bolts",
+    "moveSpeedPercent": 0.04,
+    "attackSpeedPercent": 0.45,
+    "critChance": 0.25
+  },
+  "2517": {
+    "name": "Endless Hunger",
+    "attackDamage": 65,
+    "omnivamp": 0.05,
+    "tenacity": 0.2
+  },
+  "2520": {
+    "name": "Bastionbreaker",
+    "attackDamage": 55,
+    "abilityHaste": 15,
+    "lethality": 22
+  },
+  "2522": {
+    "name": "Actualizer",
+    "abilityPower": 90,
+    "mana": 300,
+    "abilityHaste": 10
+  },
+  "2523": {
+    "name": "Hexoptics C44",
+    "attackDamage": 55,
+    "critChance": 0.25
+  },
+  "2524": {
+    "name": "Bandlepipes",
+    "health": 200,
+    "armor": 20,
+    "magicResistance": 20,
+    "abilityHaste": 15
+  },
+  "2525": {
+    "name": "Protoplasm Harness",
+    "health": 600,
+    "abilityHaste": 20
+  },
+  "2526": {
+    "name": "Whispering Circlet",
+    "health": 200,
+    "mana": 300,
+    "healShieldPower": 0.08,
+    "manaRegenPercent": 0.75
+  },
+  "2530": {
+    "name": "Diadem of Songs",
+    "health": 200,
+    "mana": 1000,
+    "healShieldPower": 0.08,
+    "manaRegenPercent": 1
+  },
+  "3003": {
+    "name": "Archangel's Staff",
+    "abilityPower": 70,
+    "mana": 600,
+    "abilityHaste": 25
+  },
+  "3004": {
+    "name": "Manamune",
+    "mana": 500,
+    "attackDamage": 35,
+    "abilityHaste": 15
+  },
+  "3026": {
+    "name": "Guardian Angel",
+    "armor": 45,
+    "attackDamage": 55
+  },
+  "3031": {
+    "name": "Infinity Edge",
+    "attackDamage": 75,
+    "critChance": 0.25
+  },
+  "3032": {
+    "name": "Yun Tal Wildarrows",
+    "attackDamage": 50,
+    "attackSpeedPercent": 0.45,
+    "critChance": 0
+  },
+  "3033": {
+    "name": "Mortal Reminder",
+    "attackDamage": 35,
+    "critChance": 0.25,
+    "percentArmorPen": 0.3
+  },
+  "3036": {
+    "name": "Lord Dominik's Regards",
+    "attackDamage": 35,
+    "critChance": 0.25,
+    "percentArmorPen": 0.35
+  },
+  "3039": {
+    "name": "Atma's Reckoning",
+    "health": 700,
+    "abilityHaste": 10,
+    "critChance": 0.2
+  },
+  "3040": {
+    "name": "Seraph's Embrace",
+    "abilityPower": 70,
+    "mana": 1000,
+    "abilityHaste": 25
+  },
+  "3042": {
+    "name": "Muramana",
+    "mana": 1000,
+    "attackDamage": 35,
+    "abilityHaste": 15
+  },
+  "3046": {
+    "name": "Phantom Dancer",
+    "moveSpeedPercent": 0.1,
+    "attackSpeedPercent": 0.65,
+    "critChance": 0.25
+  },
+  "3053": {
+    "name": "Sterak's Gage",
+    "health": 400,
+    "tenacity": 0.2
+  },
+  "3065": {
+    "name": "Spirit Visage",
+    "health": 400,
+    "magicResistance": 50,
+    "abilityHaste": 10,
+    "healthRegenPercent": 1
+  },
+  "3068": {
+    "name": "Sunfire Aegis",
+    "health": 350,
+    "armor": 50,
+    "abilityHaste": 10
+  },
+  "3071": {
+    "name": "Black Cleaver",
+    "health": 400,
+    "attackDamage": 40,
+    "abilityHaste": 20
+  },
+  "3072": {
+    "name": "Bloodthirster",
+    "attackDamage": 80,
+    "lifeSteal": 0.15
+  },
+  "3073": {
+    "name": "Experimental Hexplate",
+    "health": 450,
+    "attackDamage": 40,
+    "attackSpeedPercent": 0.2
+  },
+  "3074": {
+    "name": "Ravenous Hydra",
+    "attackDamage": 65,
+    "abilityHaste": 15,
+    "lifeSteal": 0.12
+  },
+  "3078": {
+    "name": "Trinity Force",
+    "health": 333,
+    "attackDamage": 36,
+    "abilityHaste": 15,
+    "attackSpeedPercent": 0.3
+  },
+  "3083": {
+    "name": "Warmog's Armor",
+    "health": 1000,
+    "healthRegenPercent": 1
+  },
+  "3084": {
+    "name": "Heartsteel",
+    "health": 900,
+    "healthRegenPercent": 1
+  },
+  "3085": {
+    "name": "Runaan's Hurricane",
+    "moveSpeedPercent": 0.04,
+    "attackSpeedPercent": 0.4,
+    "critChance": 0.25
+  },
+  "3087": {
+    "name": "Statikk Shiv",
+    "abilityPower": 45,
+    "attackDamage": 45,
+    "moveSpeedPercent": 0.04,
+    "attackSpeedPercent": 0.3
+  },
+  "3089": {
+    "name": "Rabadon's Deathcap",
+    "abilityPower": 130
+  },
+  "3091": {
+    "name": "Wit's End",
+    "magicResistance": 45,
+    "attackSpeedPercent": 0.5,
+    "tenacity": 0.2
+  },
+  "3094": {
+    "name": "Rapid Firecannon",
+    "moveSpeedPercent": 0.04,
+    "attackSpeedPercent": 0.35,
+    "critChance": 0.25
+  },
+  "3097": {
+    "name": "Stormrazor",
+    "attackDamage": 50,
+    "attackSpeedPercent": 0.2,
+    "critChance": 0.25
+  },
+  "3100": {
+    "name": "Lich Bane",
+    "abilityPower": 100,
+    "abilityHaste": 10,
+    "moveSpeedPercent": 0.06
+  },
+  "3102": {
+    "name": "Banshee's Veil",
+    "abilityPower": 105,
+    "magicResistance": 40
+  },
+  "3115": {
+    "name": "Nashor's Tooth",
+    "abilityPower": 80,
+    "abilityHaste": 15,
+    "attackSpeedPercent": 0.5
+  },
+  "3116": {
+    "name": "Rylai's Crystal Scepter",
+    "abilityPower": 65,
+    "health": 400
+  },
+  "3118": {
+    "name": "Malignance",
+    "abilityPower": 90,
+    "mana": 600,
+    "abilityHaste": 15
+  },
+  "3119": {
+    "name": "Winter's Approach",
+    "health": 550,
+    "mana": 500,
+    "abilityHaste": 15
+  },
+  "3121": {
+    "name": "Fimbulwinter",
+    "health": 550,
+    "mana": 1000,
+    "abilityHaste": 15
+  },
+  "3124": {
+    "name": "Guinsoo's Rageblade",
+    "abilityPower": 30,
+    "attackDamage": 30,
+    "attackSpeedPercent": 0.25
+  },
+  "3135": {
+    "name": "Void Staff",
+    "abilityPower": 95,
+    "percentMagicPen": 0.4
+  },
+  "3137": {
+    "name": "Cryptbloom",
+    "abilityPower": 75,
+    "abilityHaste": 20,
+    "percentMagicPen": 0.3
+  },
+  "3139": {
+    "name": "Mercurial Scimitar",
+    "magicResistance": 35,
+    "attackDamage": 50,
+    "lifeSteal": 0.1
+  },
+  "3142": {
+    "name": "Youmuu's Ghostblade",
+    "attackDamage": 55,
+    "lethality": 18,
+    "moveSpeedPercent": 0.04
+  },
+  "3143": {
+    "name": "Randuin's Omen",
+    "health": 350,
+    "armor": 75
+  },
+  "3146": {
+    "name": "Hextech Gunblade",
+    "abilityPower": 80,
+    "attackDamage": 40,
+    "omnivamp": 0.1
+  },
+  "3152": {
+    "name": "Hextech Rocketbelt",
+    "abilityPower": 60,
+    "health": 350,
+    "abilityHaste": 20
+  },
+  "3153": {
+    "name": "Blade of The Ruined King",
+    "attackDamage": 40,
+    "attackSpeedPercent": 0.25,
+    "lifeSteal": 0.1
+  },
+  "3156": {
+    "name": "Maw of Malmortius",
+    "magicResistance": 40,
+    "attackDamage": 60,
+    "abilityHaste": 15
+  },
+  "3157": {
+    "name": "Zhonya's Hourglass",
+    "abilityPower": 105,
+    "armor": 50
+  },
+  "3161": {
+    "name": "Spear of Shojin",
+    "health": 450,
+    "attackDamage": 45
+  },
+  "3165": {
+    "name": "Morellonomicon",
+    "abilityPower": 75,
+    "health": 350,
+    "abilityHaste": 15
+  },
+  "3179": {
+    "name": "Umbral Glaive",
+    "attackDamage": 60,
+    "abilityHaste": 15,
+    "lethality": 18
+  },
+  "3181": {
+    "name": "Hullbreaker",
+    "health": 500,
+    "attackDamage": 40,
+    "moveSpeedPercent": 0.04
+  },
+  "3193": {
+    "name": "Gargoyle Stoneplate",
+    "armor": 60,
+    "magicResistance": 60,
+    "abilityHaste": 15
+  },
+  "3302": {
+    "name": "Terminus",
+    "attackDamage": 30,
+    "attackSpeedPercent": 0.35
+  },
+  "3508": {
+    "name": "Essence Reaver",
+    "attackDamage": 50,
+    "abilityHaste": 20,
+    "critChance": 0.25
+  },
+  "3742": {
+    "name": "Dead Man's Plate",
+    "health": 350,
+    "armor": 55,
+    "moveSpeedPercent": 0.04
+  },
+  "3748": {
+    "name": "Titanic Hydra",
+    "health": 600,
+    "attackDamage": 40
+  },
+  "3814": {
+    "name": "Edge of Night",
+    "health": 250,
+    "attackDamage": 50,
+    "lethality": 15
+  },
+  "4004": {
+    "name": "Spectral Cutlass",
+    "attackDamage": 50,
+    "lethality": 15,
+    "moveSpeedPercent": 0.04
+  },
+  "4005": {
+    "name": "Imperial Mandate",
+    "abilityPower": 60,
+    "abilityHaste": 15,
+    "manaRegenPercent": 1.5
+  },
+  "4011": {
+    "name": "Sword of Blossoming Dawn",
+    "abilityPower": 45,
+    "health": 200,
+    "abilityHaste": 15,
+    "healShieldPower": 0.12
+  },
+  "4015": {
+    "name": "Perplexity",
+    "abilityPower": 60,
+    "moveSpeedPercent": 0.05,
+    "percentMagicPen": 0.3,
+    "percentArmorPen": 0.22
+  },
+  "4016": {
+    "name": "Wordless Promise",
+    "abilityPower": 50,
+    "abilityHaste": 25,
+    "healShieldPower": 0.15
+  },
+  "4017": {
+    "name": "Hellfire Hatchet",
+    "attackDamage": 40,
+    "lethality": 12
+  },
+  "4401": {
+    "name": "Force of Nature",
+    "health": 400,
+    "magicResistance": 55,
+    "moveSpeedPercent": 0.04
+  },
+  "4402": {
+    "name": "Innervating Locket",
+    "health": 400,
+    "mana": 300,
+    "attackDamage": 30,
+    "abilityHaste": 10
+  },
+  "4403": {
+    "name": "The Golden Spatula",
+    "abilityPower": 120,
+    "health": 250,
+    "mana": 250,
+    "armor": 30,
+    "magicResistance": 30,
+    "attackDamage": 70,
+    "abilityHaste": 20,
+    "moveSpeedPercent": 0.1,
+    "attackSpeedPercent": 0.5,
+    "critChance": 0.3,
+    "lifeSteal": 0.1,
+    "healthRegenPercent": 1,
+    "manaRegenPercent": 1
+  },
+  "4628": {
+    "name": "Horizon Focus",
+    "abilityPower": 75,
+    "abilityHaste": 25
+  },
+  "4629": {
+    "name": "Cosmic Drive",
+    "abilityPower": 70,
+    "health": 350,
+    "abilityHaste": 25,
+    "moveSpeedPercent": 0.04
+  },
+  "4633": {
+    "name": "Riftmaker",
+    "abilityPower": 70,
+    "health": 350,
+    "abilityHaste": 15
+  },
+  "4636": {
+    "name": "Night Harvester",
+    "abilityPower": 90,
+    "health": 300,
+    "abilityHaste": 25
+  },
+  "4637": {
+    "name": "Demonic Embrace",
+    "abilityPower": 75,
+    "health": 350
+  },
+  "4644": {
+    "name": "Crown of the Shattered Queen",
+    "abilityPower": 85,
+    "health": 250,
+    "mana": 600,
+    "abilityHaste": 20,
+    "moveSpeedPercent": 0.01
+  },
+  "4645": {
+    "name": "Shadowflame",
+    "abilityPower": 110,
+    "flatMagicPen": 15
+  },
+  "6333": {
+    "name": "Death's Dance",
+    "armor": 50,
+    "attackDamage": 60,
+    "abilityHaste": 15
+  },
+  "6609": {
+    "name": "Chempunk Chainsword",
+    "health": 450,
+    "attackDamage": 45,
+    "abilityHaste": 15
+  },
+  "6610": {
+    "name": "Sundered Sky",
+    "health": 400,
+    "attackDamage": 45,
+    "abilityHaste": 10
+  },
+  "6630": {
+    "name": "Goredrinker",
+    "health": 400,
+    "attackDamage": 55,
+    "abilityHaste": 20,
+    "omnivamp": 0.08
+  },
+  "6631": {
+    "name": "Stridebreaker",
+    "health": 450,
+    "attackDamage": 40,
+    "attackSpeedPercent": 0.25
+  },
+  "6632": {
+    "name": "Divine Sunderer",
+    "health": 300,
+    "attackDamage": 40,
+    "abilityHaste": 20,
+    "percentMagicPen": 0.03,
+    "percentArmorPen": 0.03
+  },
+  "6653": {
+    "name": "Liandry's Torment",
+    "abilityPower": 60,
+    "health": 300
+  },
+  "6655": {
+    "name": "Luden's Echo",
+    "abilityPower": 100,
+    "mana": 600,
+    "abilityHaste": 10
+  },
+  "6656": {
+    "name": "Everfrost",
+    "abilityPower": 70,
+    "health": 250,
+    "mana": 600,
+    "abilityHaste": 20
+  },
+  "6657": {
+    "name": "Rod of Ages",
+    "abilityPower": 45,
+    "health": 350,
+    "mana": 500
+  },
+  "6662": {
+    "name": "Iceborn Gauntlet",
+    "health": 300,
+    "armor": 50,
+    "abilityHaste": 15
+  },
+  "6664": {
+    "name": "Hollow Radiance",
+    "health": 400,
+    "magicResistance": 40,
+    "abilityHaste": 10,
+    "healthRegenPercent": 1
+  },
+  "6665": {
+    "name": "Jak'Sho, The Protean",
+    "health": 350,
+    "armor": 45,
+    "magicResistance": 45
+  },
+  "6671": {
+    "name": "Galeforce",
+    "attackDamage": 50,
+    "moveSpeedPercent": 0.07,
+    "attackSpeedPercent": 0.15,
+    "critChance": 0.2
+  },
+  "6672": {
+    "name": "Kraken Slayer",
+    "attackDamage": 45,
+    "moveSpeedPercent": 0.04,
+    "attackSpeedPercent": 0.4
+  },
+  "6673": {
+    "name": "Immortal Shieldbow",
+    "attackDamage": 55,
+    "critChance": 0.25
+  },
+  "6675": {
+    "name": "Navori Flickerblade",
+    "moveSpeedPercent": 0.04,
+    "attackSpeedPercent": 0.4,
+    "critChance": 0.25
+  },
+  "6676": {
+    "name": "The Collector",
+    "attackDamage": 50,
+    "lethality": 10,
+    "critChance": 0.25
+  },
+  "6691": {
+    "name": "Duskblade of Draktharr",
+    "attackDamage": 60,
+    "abilityHaste": 15,
+    "lethality": 18,
+    "moveSpeedFlat": 5
+  },
+  "6692": {
+    "name": "Eclipse",
+    "attackDamage": 60,
+    "abilityHaste": 15
+  },
+  "6693": {
+    "name": "Prowler's Claw",
+    "attackDamage": 55,
+    "abilityHaste": 15,
+    "lethality": 22
+  },
+  "6694": {
+    "name": "Serylda's Grudge",
+    "attackDamage": 45,
+    "abilityHaste": 15,
+    "percentArmorPen": 0.35
+  },
+  "6695": {
+    "name": "Serpent's Fang",
+    "attackDamage": 55,
+    "lethality": 15
+  },
+  "6696": {
+    "name": "Axiom Arc",
+    "attackDamage": 55,
+    "abilityHaste": 20,
+    "lethality": 18
+  },
+  "6697": {
+    "name": "Hubris",
+    "attackDamage": 55,
+    "abilityHaste": 10,
+    "lethality": 18
+  },
+  "6698": {
+    "name": "Profane Hydra",
+    "attackDamage": 55,
+    "abilityHaste": 10,
+    "lethality": 18
+  },
+  "6699": {
+    "name": "Voltaic Cyclosword",
+    "attackDamage": 55,
+    "abilityHaste": 10,
+    "lethality": 10
+  },
+  "6701": {
+    "name": "Opportunity",
+    "attackDamage": 55,
+    "lethality": 18
+  },
+  "8001": {
+    "name": "Anathema's Chains",
+    "health": 650,
+    "abilityHaste": 20
+  },
+  "8010": {
+    "name": "Bloodletter's Curse",
+    "abilityPower": 65,
+    "health": 400,
+    "abilityHaste": 15
+  },
+  "123430": {
+    "name": "Rite of Ruin",
+    "abilityPower": 55,
+    "abilityHaste": 10,
+    "moveSpeedPercent": 0.04,
+    "critChance": 0.25
+  },
+  "322065": {
+    "name": "Shurelya's Battlesong",
+    "abilityPower": 65,
+    "abilityHaste": 15,
+    "moveSpeedPercent": 0.06,
+    "manaRegenPercent": 1.5
+  },
+  "323050": {
+    "name": "Zeke's Convergence",
+    "health": 350,
+    "armor": 30,
+    "magicResistance": 30,
+    "abilityHaste": 10
+  },
+  "323075": {
+    "name": "Thornmail",
+    "health": 200,
+    "armor": 85
+  },
+  "323107": {
+    "name": "Redemption",
+    "abilityPower": 30,
+    "abilityHaste": 15,
+    "healShieldPower": 0.1,
+    "manaRegenPercent": 1
+  },
+  "323109": {
+    "name": "Knight's Vow",
+    "health": 300,
+    "armor": 50,
+    "abilityHaste": 10,
+    "healthRegenPercent": 1.5
+  },
+  "323110": {
+    "name": "Frozen Heart",
+    "mana": 500,
+    "armor": 75,
+    "abilityHaste": 25
+  },
+  "323190": {
+    "name": "Locket of the Iron Solari",
+    "health": 250,
+    "armor": 30,
+    "magicResistance": 30,
+    "abilityHaste": 10
+  },
+  "323222": {
+    "name": "Mikael's Blessing",
+    "health": 400,
+    "abilityHaste": 15,
+    "healShieldPower": 0.15,
+    "manaRegenPercent": 1
+  },
+  "323504": {
+    "name": "Ardent Censer",
+    "abilityPower": 55,
+    "moveSpeedPercent": 0.06,
+    "healShieldPower": 0.1,
+    "manaRegenPercent": 1.5
+  },
+  "326616": {
+    "name": "Staff of Flowing Water",
+    "abilityPower": 45,
+    "abilityHaste": 10,
+    "healShieldPower": 0.1,
+    "manaRegenPercent": 1.5
+  },
+  "326617": {
+    "name": "Moonstone Renewer",
+    "abilityPower": 35,
+    "health": 400,
+    "abilityHaste": 20,
+    "manaRegenPercent": 1.5
+  },
+  "326620": {
+    "name": "Echoes of Helia",
+    "abilityPower": 35,
+    "health": 250,
+    "abilityHaste": 20,
+    "manaRegenPercent": 1.5
+  },
+  "326621": {
+    "name": "Dawncore",
+    "abilityPower": 50,
+    "healShieldPower": 0.2,
+    "manaRegenPercent": 1.5
+  },
+  "328020": {
+    "name": "Abyssal Mask",
+    "health": 350,
+    "magicResistance": 50,
+    "abilityHaste": 15
+  },
+  "443054": {
+    "name": "Darksteel Talons",
+    "armor": 55,
+    "moveSpeedPercent": 0.05,
+    "attackSpeedPercent": 0.5
+  },
+  "443055": {
+    "name": "Fulmination",
+    "attackDamage": 55,
+    "moveSpeedPercent": 0.15,
+    "attackSpeedPercent": 0.45
+  },
+  "443058": {
+    "name": "Shield of Molten Stone",
+    "health": 300,
+    "armor": 100
+  },
+  "443059": {
+    "name": "Cloak of Starry Night",
+    "health": 300,
+    "magicResistance": 100
+  },
+  "443060": {
+    "name": "Sword of the Divine",
+    "critChance": 0.5
+  },
+  "443062": {
+    "name": "Sanguine Gift",
+    "abilityPower": 80,
+    "abilityHaste": 20,
+    "healShieldPower": 0.15
+  },
+  "443063": {
+    "name": "Eleisa's Miracle",
+    "armor": 50,
+    "magicResistance": 50,
+    "abilityHaste": 25
+  },
+  "443069": {
+    "name": "Hamstringer",
+    "attackDamage": 45,
+    "attackSpeedPercent": 0.4,
+    "critChance": 0.25
+  },
+  "443079": {
+    "name": "Turbo Chemtank",
+    "health": 600
+  },
+  "443081": {
+    "name": "Hexbolt Companion",
+    "attackDamage": 70,
+    "moveSpeedPercent": 0.06,
+    "attackSpeedPercent": 0.5
+  },
+  "443090": {
+    "name": "Reaper's Toll",
+    "moveSpeedPercent": 0.05,
+    "attackSpeedPercent": 0.5
+  },
+  "446667": {
+    "name": "Radiant Virtue",
+    "health": 400,
+    "armor": 35,
+    "magicResistance": 35,
+    "healShieldPower": 0.12
+  },
+  "447100": {
+    "name": "Mirage Blade",
+    "moveSpeedPercent": 0.06,
+    "attackSpeedPercent": 0.6
+  },
+  "447101": {
+    "name": "Gambler's Blade",
+    "abilityHaste": 40,
+    "moveSpeedPercent": 0.08,
+    "attackSpeedPercent": 0.7
+  },
+  "447102": {
+    "name": "Reality Fracture",
+    "abilityPower": 80,
+    "health": 300,
+    "attackSpeedPercent": 0.4
+  },
+  "447103": {
+    "name": "Hemomancer's Helm",
+    "attackDamage": 70,
+    "abilityHaste": 30,
+    "omnivamp": 0.15
+  },
+  "447105": {
+    "name": "Empyrean Promise",
+    "abilityPower": 70,
+    "abilityHaste": 30,
+    "healShieldPower": 0.18,
+    "manaRegenPercent": 1.25
+  },
+  "447107": {
+    "name": "Decapitator",
+    "moveSpeedPercent": 0.08,
+    "attackSpeedPercent": 0.5
+  },
+  "447108": {
+    "name": "Runecarver",
+    "abilityPower": 80,
+    "abilityHaste": 20,
+    "moveSpeedPercent": 0.04
+  },
+  "447109": {
+    "name": "Cruelty",
+    "abilityPower": 80,
+    "armor": 30,
+    "magicResistance": 30
+  },
+  "447110": {
+    "name": "Moonflair Spellblade",
+    "abilityPower": 85,
+    "health": 400,
+    "tenacity": 0.3
+  },
+  "447112": {
+    "name": "Flesheater",
+    "health": 500,
+    "abilityHaste": 20
+  },
+  "447113": {
+    "name": "Detonation Orb",
+    "abilityPower": 90,
+    "mana": 600,
+    "abilityHaste": 20,
+    "flatMagicPen": 12
+  },
+  "447114": {
+    "name": "Reverberation",
+    "armor": 35,
+    "magicResistance": 35,
+    "attackSpeedPercent": 0.4
+  },
+  "447115": {
+    "name": "Regicide",
+    "attackDamage": 60,
+    "lethality": 15,
+    "moveSpeedPercent": 0.08
+  },
+  "447116": {
+    "name": "Kinkou Jitte",
+    "health": 400,
+    "abilityHaste": 30
+  },
+  "447118": {
+    "name": "Pyromancer's Cloak",
+    "health": 400,
+    "abilityHaste": 15
+  },
+  "447119": {
+    "name": "Lightning Rod",
+    "health": 500,
+    "armor": 30,
+    "magicResistance": 30,
+    "abilityHaste": 20
+  },
+  "447120": {
+    "name": "Diamond-Tipped Spear",
+    "attackSpeedPercent": 0.4
+  },
+  "447121": {
+    "name": "Twilight's Edge",
+    "abilityPower": 100,
+    "attackDamage": 70
+  },
+  "447122": {
+    "name": "Black Hole Gauntlet",
+    "health": 900,
+    "abilityHaste": 25
+  },
+  "447123": {
+    "name": "Puppeteer",
+    "abilityHaste": 40,
+    "attackSpeedPercent": 0.3,
+    "healShieldPower": 0.15,
+    "manaRegenPercent": 1.5
+  },
+  "773172": {
+    "name": "Zephyr",
+    "attackDamage": 25,
+    "moveSpeedPercent": 0.1,
+    "attackSpeedPercent": 0.5,
+    "abilityHaste": 0.1
+  }
+}
