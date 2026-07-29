@@ -15,16 +15,23 @@ function getScaledStat(base, growth, g, factorType) {
       case 'regen':       f = 0.75  + 0.025  * g; break;
       case 'armor':
       case 'mr':          f = 0.65  + 0.035  * g; break;
+      case 'health':      f = 0.7025 + 0.0175 * g; break;
       default:            f = 0.685 + 0.0175 * g;
   }
   return base + growth * g * f;
 }
 
-function calculateChampionBaseStats(champData, level) {
+function calculateChampionBaseStats(champData, level, championKey) {
   const g = level - 1;
-  const stats = champData.stats;
+  // Start with Data Dragon stats
+  const stats = { ...champData.stats };
+  // Override with wiki stats if available
+  if (window.championStats && window.championStats[championKey]) {
+    Object.assign(stats, window.championStats[championKey]);
+  }
+  // Now use stats as before
   return {
-    health:           getScaledStat(stats.hp,             stats.hpperlevel,             g, 'hp_ad'),
+    health:           getScaledStat(stats.hp,             stats.hpperlevel,             g, 'health'),
     mana:             getScaledStat(stats.mp,             stats.mpperlevel,             g, 'mana'),
     armor:            getScaledStat(stats.armor,          stats.armorperlevel,          g, 'armor'),
     magicResistance:  getScaledStat(stats.spellblock,     stats.spellblockperlevel,     g, 'mr'),
@@ -157,17 +164,83 @@ function applyCustomAugmentEffects(selectedAugments, augments, finalStats, baseS
 //  CHAMPION PASSIVE CONVERSIONS
 // ============================
 
-function applyChampionPassives(finalStats, championKey) {
+function applyChampionPassives(finalStats, championKey, baseStats, itemBonuses, augmentBonuses, level) {
   if (!championKey || typeof championPassives === 'undefined') return;
   const passive = championPassives[championKey];
   if (!passive) return;
 
-  // --- Ryze: Arcane Mastery (mana from AP) ---
+  // ========================
+  // Ryze
+  // ========================
   if (passive.manaMultiplierFromAP) {
     const ap = finalStats.abilityPower || 0;
     const percentPer100 = passive.manaMultiplierFromAP.percentPer100AP; // 10
-    const multiplier = 1 + (ap * (percentPer100 / 10000));   // 10% per 100 AP → 0.001 per AP
+    const multiplier = 1 + (ap * (percentPer100 / 10000));   // 0.001 per AP
     finalStats.mana = Math.round(finalStats.mana * multiplier);
+  }
+
+  // ========================
+  // Vladimir (updated)
+  // ========================
+if (passive.healthPerAP && passive.abilityPowerPerBonusHealth) {
+  // HP from bonus AP (total AP from items/augments/adaptive, all in finalStats.abilityPower)
+  const currentAP = finalStats.abilityPower;   // already includes all AP sources
+  const hpFromAP = currentAP * passive.healthPerAP;   // 160% AP
+
+  // Bonus HP from items/augments (already added to finalStats.health)
+  const bonusHP = finalStats.health - baseStats.health;
+  const apFromHP = bonusHP * passive.abilityPowerPerBonusHealth;   // 3.333% bonus HP
+
+  // Add the non‑stacking bonuses
+  finalStats.health = Math.round(finalStats.health + hpFromAP);
+  finalStats.abilityPower = Math.round(finalStats.abilityPower + apFromHP);
+}
+
+  // ========================
+  // Jhin (updated)
+  // ========================
+  if (passive.levelBaseADPercent !== undefined) {
+    const baseAD = baseStats.attackDamage;
+    const bonusAD_items = (itemBonuses.attackDamage || 0) + (augmentBonuses.attackDamage || 0);
+    const bonusAS = (itemBonuses.attackSpeedPercent || 0) + (augmentBonuses.attackSpeedPercent || 0);
+    const crit = finalStats.critChance; // decimal (0.2 = 20%)
+
+    // Level multiplier: 4% at level 1, 44% at level 18, linear scaling
+    const levelMult = passive.levelBaseADPercent + passive.levelADPercentPerLevel * (level - 1);
+    // Crit and AS multipliers (convert from percent)
+    const critMult = passive.adPerCritPercent * (crit * 100);          // 0.35% per 1% crit
+    const asMult   = passive.adPerASPercent   * (bonusAS * 100);      // 0.3% per 1% AS
+    const totalADMult = 1 + levelMult + critMult + asMult;
+
+    finalStats.attackDamage = Math.round((baseAD + bonusAD_items) * totalADMult);
+
+    // Jhin does NOT gain attack speed from items – keep only base + level growth
+    finalStats.attackSpeed = baseStats.attackSpeed * (1 + (baseStats.attackSpeedPerLevel || 0) * (level - 1));
+  }
+
+  // ========================
+  // Pyke
+  // ========================
+  if (passive.adPerBonusHealth) {
+    const bonusHP = (itemBonuses.health || 0) + (augmentBonuses.health || 0);
+    finalStats.attackDamage = Math.round(finalStats.attackDamage + bonusHP * passive.adPerBonusHealth);
+    finalStats.health = baseStats.health;  // no bonus HP
+  }
+
+  // ========================
+  // Senna
+  // ========================
+  if (passive.excessCritToLifesteal) {
+    const crit = finalStats.critChance;
+    if (crit > 1.0) {
+      finalStats.lifeSteal += (crit - 1.0);
+      finalStats.critChance = 1.0;
+    }
+  }
+  if (passive.attackSpeedMultiplier) {
+    const bonusAS = (itemBonuses.attackSpeedPercent || 0) + (augmentBonuses.attackSpeedPercent || 0);
+    const reducedAS = bonusAS * passive.attackSpeedMultiplier;
+    finalStats.attackSpeed = baseStats.attackSpeed * (1 + (baseStats.attackSpeedPerLevel || 0) * (level - 1) + reducedAS);
   }
 }
 
@@ -207,7 +280,7 @@ function computeFinalStats(base, itemBonuses, augmentBonuses, level, selectedAug
     health: base.health + (totalBonuses.health || 0),
     mana: base.mana + (totalBonuses.mana || 0),
     healthRegen: healthRegenFlat,
-    manaRegen:   manaRegenFlat,
+    manaRegen: manaRegenFlat,
     armor: base.armor + (totalBonuses.armor || 0),
     magicResistance: base.magicResistance + (totalBonuses.magicResistance || 0),
     attackDamage: base.attackDamage + adBonus,
@@ -231,13 +304,13 @@ function computeFinalStats(base, itemBonuses, augmentBonuses, level, selectedAug
     slowResist: totalBonuses.slowResist || 0
   };
 
-  // Custom augment effects
+  // Custom augment effects (like ADAPt)
   if (selectedAugments && augments) {
     applyCustomAugmentEffects(selectedAugments, augments, final, base);
   }
 
-  // Champion‑specific passives
-  applyChampionPassives(final, championKey);
+  // Champion‑specific passive conversions
+  applyChampionPassives(final, championKey, base, itemBonuses, augmentBonuses, level);
 
   return final;
 }
